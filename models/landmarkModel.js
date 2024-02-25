@@ -23,6 +23,7 @@ const landmarkSchema = new mongoose.Schema({
         type: String,
         required: [true, 'A landmark must have an image cover'],
     },
+    images: [String],
     category: {
         type: String,
         enum: [
