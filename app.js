@@ -3,7 +3,7 @@ const express = require('express');
 const AppError = require('./utils/appError');
 
 const globalErrorHandler = require('./controllers/errorController');
-const landmarkRouter = require('./routers/landmarkRouter');
+const landmarkRouter = require('./routes/landmarkRoutes');
 
 const app = express();
 
