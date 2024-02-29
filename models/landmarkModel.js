@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
 
 const landmarkSchema = new mongoose.Schema({
     name: {
@@ -25,15 +24,8 @@ const landmarkSchema = new mongoose.Schema({
     },
     images: [String],
     category: {
-        type: String,
-        enum: [
-            'Archaeological Areas',
-            'Temples',
-            'Mosques',
-            'Churches',
-            'Museums',
-            'Tourist Attractions',
-        ],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
         required: [true, 'A landmark must have a category'],
     },
     location: {
