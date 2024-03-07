@@ -1,9 +1,46 @@
+const fs = require('fs');
+const path = require('path');
+
+const directory = 'public/img/users';
+
+// Create the directory if it doesn't exist
+if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory, { recursive: true });
+}
+
+// Packages
+const multer = require('multer');
+
 // models
 const User = require('./../models/userModel');
 
 // utils
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+
+const fileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/img/users');
+    },
+    filename: (req, file, cb) => {
+        const ext = file.mimetype.split('/')[1];
+        cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+    },
+});
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image')) {
+        cb(null, true);
+    } else {
+        cb(
+            new AppError('Not an image! Please only upload images.', 400),
+            false
+        );
+    }
+};
+
+const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
+exports.uploadUserPhoto = upload.single('photo');
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {};
