@@ -9,6 +9,9 @@
     },
     "author": "Graduation Members",
     "license": "ISC",
+    "engines": {
+        "node": ">=10"
+    },
     "dependencies": {
         "bcryptjs": "^2.4.3",
         "dotenv": "^16.4.5",
@@ -16,7 +19,9 @@
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^8.2.0",
         "morgan": "^1.10.0",
+        "multer": "^1.4.5-lts.1",
         "nodemailer": "^6.9.10",
+        "sharp": "^0.33.2",
         "validator": "^13.11.0"
     },
     "devDependencies": {
