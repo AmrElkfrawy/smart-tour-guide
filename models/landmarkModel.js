@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const landmarkSchema = new mongoose.Schema({
     name: {
@@ -52,6 +53,11 @@ const landmarkSchema = new mongoose.Schema({
             ref: 'Review', // Reference to reviews associated with the landmark
         },
     ],
+});
+
+landmarkSchema.pre('save', function (next) {
+    this.slug = slugify(this.name, { lower: true }); // this keyword points to the current document being processed
+    next();
 });
 
 const Landmark = mongoose.model('Landmark', landmarkSchema);

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const categorySchema = new mongoose.Schema({
     name: {
@@ -18,6 +19,11 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: [true, 'A category must have an image cover'],
     },
+});
+
+categorySchema.pre('save', function (next) {
+    this.slug = slugify(this.name, { lower: true }); // this keyword points to the current document being processed
+    next();
 });
 
 const Category = mongoose.model('Category', categorySchema);
