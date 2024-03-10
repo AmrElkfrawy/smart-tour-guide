@@ -30,7 +30,14 @@ const landmarkSchema = new mongoose.Schema({
         required: [true, 'A landmark must have a category'],
     },
     location: {
-        type: String,
+        type: {
+            type: String,
+            default: 'Point',
+            enum: ['Point'],
+        },
+        // longitude, latitude
+        coordinates: [Number],
+        governorate: String,
     },
 
     rating: {
@@ -47,12 +54,7 @@ const landmarkSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    reviews: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Review', // Reference to reviews associated with the landmark
-        },
-    ],
+    slug: String,
 });
 
 landmarkSchema.pre('save', function (next) {
