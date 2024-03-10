@@ -6,7 +6,8 @@ const AppError = require('./../utils/appError');
 exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
     const features = new APIFeatures(Landmark.find(), req.query);
-    const landmarks = await features.query;
+    const landmarks = await features.query.explain();
+    // const landmarks = await features.query.explain();
 
     // SEND RESPONSE
     res.status(200).json({

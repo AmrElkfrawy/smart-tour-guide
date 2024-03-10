@@ -59,15 +59,18 @@ const landmarkSchema = new mongoose.Schema(
     }
 );
 
-landmarkSchema.pre('save', function (next) {
-    this.slug = slugify(this.name, { lower: true }); // this keyword points to the current document being processed
-    next();
-});
+landmarkSchema.index({ slug: 1 });
+landmarkSchema.index({ location: '2dsphere' });
 
 landmarkSchema.virtual('reviews', {
     ref: 'Review',
     foreignField: 'landmark',
     localField: '_id',
+});
+
+landmarkSchema.pre('save', function (next) {
+    this.slug = slugify(this.name, { lower: true }); // this keyword points to the current document being processed
+    next();
 });
 
 landmarkSchema.pre(/^find/, function (next) {
