@@ -10,15 +10,16 @@ router.route('/').get(landmarkController.getAllLandmarks).post(
     landmarkController.createLandmark
 );
 
+router.use(authController.protect);
+
 router
     .route('/:id')
+    .get(landmarkController.getLandmark)
     .patch(
-        authController.protect,
         authController.restrictTo('admin'),
         landmarkController.updateLandmark
     )
     .delete(
-        authController.protect,
         authController.restrictTo('admin'),
         landmarkController.deleteLandmark
     );

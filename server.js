@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 process.on('uncaughtException', (err) => {
     console.log('Uncaught exception, Application is terminating.');
     console.log(err.name, err.message);
+    console.log(err.stack);
     process.exit(1);
 });
 
@@ -11,6 +12,8 @@ const dotenv = require('dotenv');
 dotenv.config({ path: './.env' });
 
 const app = require('./app');
+
+// mongoose.set('debug', true);
 
 const dbConnection = process.env.DB_CONNECTION_STRING;
 mongoose
