@@ -55,12 +55,12 @@ reviewSchema.statics.calcAverageRatings = async function (landmarkId) {
     if (stats.length > 0) {
         await landmarkModel.findByIdAndUpdate(landmarkId, {
             ratingsQuantity: stats[0].nRating,
-            ratingsAverage: stats[0].avgRating,
+            rating: stats[0].avgRating,
         });
     } else {
         await landmarkModel.findByIdAndUpdate(landmarkId, {
             ratingsQuantity: 0,
-            ratingsAverage: 4.5,
+            rating: 4.5,
         });
     }
 };

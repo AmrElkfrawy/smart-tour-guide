@@ -7,7 +7,15 @@ class APIFeatures {
 
     filter() {
         const queryObj = { ...this.queryString };
-        const excludedFields = ['page', 'sort', 'limit', 'fields'];
+        const excludedFields = [
+            'page',
+            'sort',
+            'limit',
+            'fields',
+            'search',
+            'location',
+            'category',
+        ];
         excludedFields.forEach((el) => delete queryObj[el]);
 
         // Advanced Filtering
@@ -16,21 +24,33 @@ class APIFeatures {
             /\b(gte|gt|lte|lt)\b/g,
             (match) => `$${match}`
         ); // \b for finding the exact word, not when it's part of another.. g for multiple occurrences
-        this.query = this.query.find(JSON.parse(queryStr));
 
+        if (this.queryString.location) {
+            const locations = this.queryString.location.split(',');
+            this.query = this.query.find({
+                'location.governorate': { $in: locations },
+            });
+        }
+
+        if (this.queryString.search) {
+            const searchRegex = new RegExp('^' + this.queryString.search, 'i');
+            this.query = this.query.find({ name: searchRegex });
+        }
+
+        this.query = this.query.find(JSON.parse(queryStr));
         return this; // To be able to chain methods.
     }
 
-    // sort() {
-    //     if (this.queryString.sort) {
-    //         const sortBy = this.queryString.sort.split(',').join(' ');
-    //         this.query = this.query.sort(sortBy);
-    //     } else {
-    //         this.query = this.query.sort('-createdAt'); // - for sorting in descending order
-    //     }
+    sort() {
+        if (this.queryString.sort) {
+            const sortBy = this.queryString.sort.split(',').join(' ');
+            this.query = this.query.sort(sortBy);
+        } else {
+            this.query = this.query.sort('-createdAt'); // - for sorting in descending order
+        }
 
-    //     return this;
-    // }
+        return this;
+    }
 
     limitFields() {
         if (this.queryString.fields) {

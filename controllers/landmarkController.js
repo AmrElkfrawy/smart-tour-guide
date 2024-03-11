@@ -7,7 +7,12 @@ exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
     let filter = {};
     if (req.params.categoryId) filter = { category: req.params.categoryId };
-    const features = new APIFeatures(Landmark.find(filter), req.query);
+    const features = new APIFeatures(Landmark.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+
     const landmarks = await features.query;
     // const landmarks = await features.query.explain();
 
