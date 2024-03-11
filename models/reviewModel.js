@@ -1,3 +1,5 @@
+const landmarkModel = require('./landmarkModel');
+
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
@@ -27,12 +29,48 @@ const reviewSchema = new mongoose.Schema({
     },
 });
 
+reviewSchema.index({ landmark: 1, user: 1 }, { unique: true });
+
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
         path: 'user',
         select: 'name photo',
     });
     next();
+});
+reviewSchema.statics.calcAverageRatings = async function (landmarkId) {
+    const stats = await this.aggregate([
+        {
+            $match: { landmark: landmarkId },
+        },
+        {
+            $group: {
+                _id: '$landmark',
+                nRating: { $sum: 1 },
+                avgRating: { $avg: '$rating' },
+            },
+        },
+    ]);
+    // console.log(stats);
+    if (stats.length > 0) {
+        await landmarkModel.findByIdAndUpdate(landmarkId, {
+            ratingsQuantity: stats[0].nRating,
+            ratingsAverage: stats[0].avgRating,
+        });
+    } else {
+        await landmarkModel.findByIdAndUpdate(landmarkId, {
+            ratingsQuantity: 0,
+            ratingsAverage: 4.5,
+        });
+    }
+};
+
+reviewSchema.post('save', function () {
+    this.constructor.calcAverageRatings(this.landmark);
+});
+
+reviewSchema.post(/^findOneAnd/, async (doc) => {
+    await doc.constructor.calcAverageRatings(doc.landmark);
 });
 
 const Review = mongoose.model('Review', reviewSchema);

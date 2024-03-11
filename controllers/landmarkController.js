@@ -5,8 +5,11 @@ const AppError = require('./../utils/appError');
 
 exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
-    const features = new APIFeatures(Landmark.find(), req.query);
+    let filter = {};
+    if (req.params.categoryId) filter = { category: req.params.categoryId };
+    const features = new APIFeatures(Landmark.find(filter), req.query);
     const landmarks = await features.query;
+    // const landmarks = await features.query.explain();
 
     // SEND RESPONSE
     res.status(200).json({

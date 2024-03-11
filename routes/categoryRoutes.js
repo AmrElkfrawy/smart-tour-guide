@@ -2,6 +2,8 @@ const express = require('express');
 const categoryController = require('./../controllers/categoryController');
 const authController = require('../controllers/authController');
 
+const landmarkRouter = require('./landmarkRoutes');
+
 const router = express.Router();
 
 router
@@ -25,5 +27,7 @@ router
         authController.restrictTo('admin'),
         categoryController.deleteCategory
     );
+
+router.use('/:categoryId/landmarks', landmarkRouter);
 
 module.exports = router;
