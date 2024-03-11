@@ -82,3 +82,13 @@ exports.deleteLandmark = catchAsync(async (req, res, next) => {
         data: null,
     });
 });
+
+exports.getMostVisitedLandmarks = catchAsync(async (req, res, next) => {
+    const landmarks = await Landmark.find().sort({ visitsNumber: -1 }).limit(5);
+    res.status(200).json({
+        status: 'success',
+        data: {
+            landmarks,
+        },
+    });
+});

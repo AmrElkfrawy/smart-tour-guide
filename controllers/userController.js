@@ -122,7 +122,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
         .limitFields()
         .paginate();
 
-    const users = await features.find();
+    const users = await features.query;
     res.status(200).json({
         status: 'success',
         results: users.length,

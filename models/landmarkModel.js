@@ -41,6 +41,11 @@ const landmarkSchema = new mongoose.Schema(
             governorate: String,
         },
 
+        visitsNumber: {
+            type: Number,
+            default: 0,
+        },
+
         rating: {
             type: Number,
             default: 4,

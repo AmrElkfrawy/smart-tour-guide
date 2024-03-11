@@ -60,7 +60,7 @@ reviewSchema.statics.calcAverageRatings = async function (landmarkId) {
     } else {
         await landmarkModel.findByIdAndUpdate(landmarkId, {
             ratingsQuantity: 0,
-            rating: 4.5,
+            rating: 4,
         });
     }
 };
