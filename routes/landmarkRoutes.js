@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 
 const reviewRouter = require('./reviewRoutes');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.route('/').get(landmarkController.getAllLandmarks).post(
     // authController.protect,
