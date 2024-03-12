@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 process.on('uncaughtException', (err) => {
     console.log('Uncaught exception, Application is terminating.');
     console.log(err.name, err.message);
+    console.log(err.stack);
     process.exit(1);
 });
 
