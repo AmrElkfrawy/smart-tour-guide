@@ -6,11 +6,15 @@ const reviewRouter = require('./reviewRoutes');
 
 const router = express.Router({ mergeParams: true });
 
-router.route('/').get(landmarkController.getAllLandmarks).post(
-    // authController.protect,
-    // authController.restrictTo('admin'),
-    landmarkController.createLandmark
-);
+router
+    .route('/')
+    .get(landmarkController.getAllLandmarks)
+    .post(
+        authController.protect,
+        authController.restrictTo('admin'),
+        landmarkController.createLandmark
+    );
+router.get('/most-visited', landmarkController.getMostVisitedLandmarks);
 
 router.use(authController.protect);
 

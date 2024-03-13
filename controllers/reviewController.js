@@ -1,6 +1,7 @@
 const Review = require('./../models/reviewModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+const APIFeatures = require('./../utils/apiFeatures');
 
 exports.checkIfAuth = catchAsync(async (req, res, next) => {
     const review = await Review.findById(req.params.id);
@@ -18,7 +19,13 @@ exports.checkIfAuth = catchAsync(async (req, res, next) => {
 exports.getAllReviews = catchAsync(async (req, res, next) => {
     let filter = {};
     if (req.params.landmarkId) filter = { landmark: req.params.landmarkId };
-    const reviews = await Review.find(filter);
+    const features = new APIFeatures(Review.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+
+    const reviews = await features.query;
     res.status(200).json({
         status: 'success',
         results: reviews.length,

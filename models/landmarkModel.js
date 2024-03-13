@@ -41,7 +41,12 @@ const landmarkSchema = new mongoose.Schema(
             governorate: String,
         },
 
-        ratingsAverage: {
+        visitsNumber: {
+            type: Number,
+            default: 0,
+        },
+
+        rating: {
             type: Number,
             default: 4,
             min: [0, 'Rating must be at least 1'],

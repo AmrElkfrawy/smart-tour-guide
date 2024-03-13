@@ -7,7 +7,12 @@ exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
     let filter = {};
     if (req.params.categoryId) filter = { category: req.params.categoryId };
-    const features = new APIFeatures(Landmark.find(filter), req.query);
+    const features = new APIFeatures(Landmark.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+
     const landmarks = await features.query;
     // const landmarks = await features.query.explain();
 
@@ -75,5 +80,15 @@ exports.deleteLandmark = catchAsync(async (req, res, next) => {
     res.status(204).json({
         status: 'success',
         data: null,
+    });
+});
+
+exports.getMostVisitedLandmarks = catchAsync(async (req, res, next) => {
+    const landmarks = await Landmark.find().sort({ visitsNumber: -1 }).limit(5);
+    res.status(200).json({
+        status: 'success',
+        data: {
+            landmarks,
+        },
     });
 });
