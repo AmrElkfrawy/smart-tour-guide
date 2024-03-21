@@ -16,16 +16,16 @@ router
     );
 router.get('/most-visited', landmarkController.getMostVisitedLandmarks);
 
-router.use(authController.protect);
-
 router
     .route('/:id')
     .get(landmarkController.getLandmark)
     .patch(
+        authController.protect,
         authController.restrictTo('admin'),
         landmarkController.updateLandmark
     )
     .delete(
+        authController.protect,
         authController.restrictTo('admin'),
         landmarkController.deleteLandmark
     );

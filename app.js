@@ -35,8 +35,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Body parser, reading data from body in req.body
-app.use(express.json({}));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '500kb' }));
+app.use(express.urlencoded({ extended: true, limit: '500kb' }));
 
 // Data sanitization
 app.use(mongoSanitize());

@@ -17,9 +17,7 @@ const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 exports.uploadLandmarkPhoto = upload.single('photo');
 
 exports.detect = catchAsync(async (req, res, next) => {
-    console.log('here', req.file);
     let apiUrl;
-    console.log('as', req.file.buffer);
     if (req.body.location.toLowerCase() === 'alexandria') {
         apiUrl =
             'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_Alex_v0.1';
@@ -39,9 +37,7 @@ exports.detect = catchAsync(async (req, res, next) => {
         body: req.file.buffer,
     });
     let result = await response.json();
-    if (req.user.role === 'user') {
-        result = result[0];
-    }
+
     return res.status(200).json({
         status: 'success',
         data: {

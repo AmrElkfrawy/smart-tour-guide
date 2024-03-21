@@ -5,6 +5,7 @@ const AppError = require('./../utils/appError');
 
 exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
+    if (!req.params.categoryId) req.params.query.categoryId = req.body.category;
     let filter = {};
     if (req.params.categoryId) filter = { category: req.params.categoryId };
     const features = new APIFeatures(Landmark.find(filter), req.query)
@@ -43,6 +44,7 @@ exports.getLandmark = catchAsync(async (req, res, next) => {
 });
 
 exports.createLandmark = catchAsync(async (req, res, next) => {
+    if (!req.body.category) req.body.category = req.params.categoryId;
     const newLandmark = await Landmark.create(req.body);
     res.status(201).json({
         status: 'success',
