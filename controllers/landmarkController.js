@@ -86,7 +86,7 @@ exports.deleteLandmark = catchAsync(async (req, res, next) => {
 });
 
 exports.getMostVisitedLandmarks = catchAsync(async (req, res, next) => {
-    const landmarks = await Landmark.find().sort({ visitsNumber: -1 }).limit(5);
+    const landmarks = await Landmark.find().sort({ visitsNumber: -1 }).limit(6);
     res.status(200).json({
         status: 'success',
         data: {
