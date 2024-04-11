@@ -21,11 +21,15 @@ router
     .patch(
         authController.protect,
         authController.restrictTo('admin'),
+        categoryController.uploadCategoryPhoto,
+        categoryController.resizeCategoryPhoto,
         categoryController.updateCategory
     )
     .delete(
         authController.protect,
         authController.restrictTo('admin'),
+        categoryController.uploadCategoryPhoto,
+        categoryController.resizeCategoryPhoto,
         categoryController.deleteCategory
     );
 

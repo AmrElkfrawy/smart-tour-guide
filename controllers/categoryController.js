@@ -1,7 +1,40 @@
+const multer = require('multer');
+const sharp = require('sharp');
+
 const Category = require('./../models/categoryModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+
+const fileStorage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image')) {
+        cb(null, true);
+    } else {
+        cb(
+            new AppError('Not an image! Please only upload images.', 400),
+            false
+        );
+    }
+};
+
+const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
+exports.uploadCategoryPhoto = upload.single('photo');
+
+exports.resizeCategoryPhoto = (req, res, next) => {
+    if (!req.file) return next();
+
+    // only admin can upload images
+    req.file.filename = `category-${req.user.id}-${Date.now()}.jpeg`;
+    sharp(req.file.buffer)
+        .resize(500, 500)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/categories/${req.file.filename}`);
+
+    next();
+};
 
 exports.getAllCategories = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
@@ -37,6 +70,7 @@ exports.getCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.createCategory = catchAsync(async (req, res, next) => {
+    if (req.file) req.imageCover = req.file.filename;
     const newCategory = await Category.create(req.body);
     res.status(201).json({
         status: 'success',
@@ -47,6 +81,7 @@ exports.createCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
+    if (req.file) req.imageCover = req.file.filename;
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true,
