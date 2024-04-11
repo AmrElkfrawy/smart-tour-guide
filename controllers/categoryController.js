@@ -7,7 +7,6 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
 const fileStorage = multer.memoryStorage();
-
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image')) {
         cb(null, true);
@@ -20,7 +19,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
-exports.uploadCategoryPhoto = upload.single('photo');
+
+exports.uploadCategoryPhoto = upload.single('imageCover');
 
 exports.resizeCategoryPhoto = (req, res, next) => {
     if (!req.file) return next();
@@ -70,7 +70,7 @@ exports.getCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.createCategory = catchAsync(async (req, res, next) => {
-    if (req.file) req.imageCover = req.file.filename;
+    if (req.file) req.body.imageCover = req.file.filename;
     const newCategory = await Category.create(req.body);
     res.status(201).json({
         status: 'success',
@@ -81,7 +81,7 @@ exports.createCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
-    if (req.file) req.imageCover = req.file.filename;
+    if (req.file) req.body.imageCover = req.file.filename;
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true,

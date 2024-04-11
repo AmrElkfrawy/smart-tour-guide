@@ -12,6 +12,8 @@ router
     .post(
         authController.protect,
         authController.restrictTo('admin'),
+        categoryController.uploadCategoryPhoto,
+        categoryController.resizeCategoryPhoto,
         categoryController.createCategory
     );
 
@@ -28,8 +30,6 @@ router
     .delete(
         authController.protect,
         authController.restrictTo('admin'),
-        categoryController.uploadCategoryPhoto,
-        categoryController.resizeCategoryPhoto,
         categoryController.deleteCategory
     );
 
