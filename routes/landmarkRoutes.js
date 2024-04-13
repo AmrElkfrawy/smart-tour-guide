@@ -12,6 +12,8 @@ router
     .post(
         authController.protect,
         authController.restrictTo('admin'),
+        landmarkController.uploadLandmarkPhoto,
+        landmarkController.resizeLandmarkPhoto,
         landmarkController.createLandmark
     );
 router.get('/most-visited', landmarkController.getMostVisitedLandmarks);
@@ -22,6 +24,8 @@ router
     .patch(
         authController.protect,
         authController.restrictTo('admin'),
+        landmarkController.uploadLandmarkPhoto,
+        landmarkController.resizeLandmarkPhoto,
         landmarkController.updateLandmark
     )
     .delete(
