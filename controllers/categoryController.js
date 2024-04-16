@@ -22,19 +22,19 @@ const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 
 exports.uploadCategoryPhoto = upload.single('imageCover');
 
-exports.resizeCategoryPhoto = (req, res, next) => {
+exports.resizeCategoryPhoto = catchAsync(async (req, res, next) => {
     if (!req.file) return next();
 
     // only admin can upload images
     req.file.filename = `category-${req.user.id}-${Date.now()}.jpeg`;
-    sharp(req.file.buffer)
+    await sharp(req.file.buffer)
         .resize(500, 500)
         .toFormat('jpeg')
         .jpeg({ quality: 90 })
         .toFile(`public/img/categories/${req.file.filename}`);
 
     next();
-};
+});
 
 exports.getAllCategories = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY

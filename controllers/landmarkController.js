@@ -27,11 +27,39 @@ exports.uploadLandmarkPhoto = upload.fields([
 
 // exports.test = upload.array('images', 5);
 
-exports.resizeLandmarkPhoto = (req, res, next) => {
+exports.resizeLandmarkPhoto = catchAsync(async (req, res, next) => {
     if (!req.files) return next();
-    console.log(req.files);
+
+    // upload cover
+    if (req.files.imageCover) {
+        req.body.imageCover = `landmark-${
+            req.user.id
+        }-${Date.now()}-cover.jpeg`;
+        await sharp(req.files.imageCover[0].buffer)
+            .resize(500, 500)
+            .toFormat('jpeg')
+            .jpeg({ quality: 90 })
+            .toFile(`public/img/landmarks/${req.body.imageCover}`);
+    }
+
+    if (req.files.images) {
+        req.body.images = [];
+        await Promise.all(
+            req.files.images.map(async (file, i) => {
+                const imageName = `landmark-${req.user.id}-${Date.now()}-${
+                    i + 1
+                }.jpeg`;
+                await sharp(file.buffer)
+                    .resize(500, 500)
+                    .toFormat('jpeg')
+                    .jpeg({ quality: 90 })
+                    .toFile(`public/img/landmarks/${imageName}`);
+                req.body.images.push(imageName);
+            })
+        );
+    }
     next();
-};
+});
 
 exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
@@ -39,7 +67,6 @@ exports.getAllLandmarks = catchAsync(async (req, res, next) => {
         req.params.query.categoryId = req.body.category;
     let filter = {};
     if (req.params.categoryId) filter = { category: req.params.categoryId };
-    console.log(filter);
     const features = new APIFeatures(Landmark.find(filter), req.query)
         .filter()
         .sort()
@@ -87,6 +114,22 @@ exports.createLandmark = catchAsync(async (req, res, next) => {
 });
 
 exports.updateLandmark = catchAsync(async (req, res, next) => {
+    if (req.body.editedImages) {
+        const landmark = await Landmark.findById(req.params.id);
+        if (!landmark) {
+            return next(new AppError('No landmark found with this ID', 404));
+        }
+
+        for (let i = 0; i < Math.min(3, req.body.editedImages.length); i++) {
+            if (![0, 1, 2].includes(parseInt(req.body.editedImages[i]))) {
+                req.body.editedImages[i] = i;
+            }
+            landmark.images[parseInt(req.body.editedImages[i])] =
+                req.body.images[i];
+        }
+        req.body.images = landmark.images;
+    }
+
     const landmark = await Landmark.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true,
