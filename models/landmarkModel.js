@@ -24,7 +24,11 @@ const landmarkSchema = new mongoose.Schema(
             type: String,
             required: [true, 'A landmark must have an image cover'],
         },
+        imageCoverId: {
+            type: String,
+        },
         images: [String],
+        imagesId: [String],
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Category',

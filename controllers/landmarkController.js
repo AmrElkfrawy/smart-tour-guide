@@ -4,7 +4,8 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
 const multer = require('multer');
-const sharp = require('sharp');
+const cloudinary = require('../utils/cloudinary');
+const streamifier = require('streamifier');
 
 const fileStorage = multer.memoryStorage();
 
@@ -27,39 +28,85 @@ exports.uploadLandmarkPhoto = upload.fields([
 
 // exports.test = upload.array('images', 5);
 
-exports.resizeLandmarkPhoto = catchAsync(async (req, res, next) => {
-    if (!req.files) return next();
+exports.resizeLandmarkPhoto = (req, res, next) => {
+    try {
+        if (!req.files) return next();
 
-    // upload cover
-    if (req.files.imageCover) {
-        req.body.imageCover = `landmark-${
-            req.user.id
-        }-${Date.now()}-cover.jpeg`;
-        await sharp(req.files.imageCover[0].buffer)
-            .resize(500, 500)
-            .toFormat('jpeg')
-            .jpeg({ quality: 90 })
-            .toFile(`public/img/landmarks/${req.body.imageCover}`);
-    }
+        let uploadsCompleted = 0;
+        const totalUploads =
+            (req.files.imageCover ? 1 : 0) +
+            (req.files.images ? req.files.images.length : 0);
 
-    if (req.files.images) {
-        req.body.images = [];
-        await Promise.all(
-            req.files.images.map(async (file, i) => {
-                const imageName = `landmark-${req.user.id}-${Date.now()}-${
-                    i + 1
-                }.jpeg`;
-                await sharp(file.buffer)
-                    .resize(500, 500)
-                    .toFormat('jpeg')
-                    .jpeg({ quality: 90 })
-                    .toFile(`public/img/landmarks/${imageName}`);
-                req.body.images.push(imageName);
-            })
-        );
+        function checkUploadsCompleted() {
+            uploadsCompleted++;
+            if (uploadsCompleted === totalUploads) {
+                next();
+            }
+        }
+
+        // Upload imageCover
+        if (req.files.imageCover) {
+            const cld_upload_stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'landmarks',
+                    transformation: [
+                        {
+                            width: 600,
+                            height: 600,
+                            gravity: 'auto',
+                            crop: 'fill',
+                        },
+                    ],
+                },
+                function (error, result) {
+                    if (error) {
+                        return next(new AppError(error, 500));
+                    }
+                    req.body.imageCover = result.secure_url;
+                    req.body.imageCoverId = result.public_id;
+                    checkUploadsCompleted();
+                }
+            );
+            streamifier
+                .createReadStream(req.files.imageCover[0].buffer)
+                .pipe(cld_upload_stream);
+        }
+
+        // Upload images
+        if (req.files.images) {
+            req.body.images = [];
+            req.body.imagesId = [];
+            req.files.images.forEach((image) => {
+                const cld_upload_stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'landmarks',
+                        transformation: [
+                            {
+                                width: 600,
+                                height: 600,
+                                gravity: 'auto',
+                                crop: 'fill',
+                            },
+                        ],
+                    },
+                    function (error, result) {
+                        if (error) {
+                            return next(new AppError(error, 500));
+                        }
+                        req.body.images.push(result.secure_url);
+                        req.body.imagesId.push(result.public_id);
+                        checkUploadsCompleted();
+                    }
+                );
+                streamifier
+                    .createReadStream(image.buffer)
+                    .pipe(cld_upload_stream);
+            });
+        }
+    } catch (err) {
+        return next(new AppError(err, 500));
     }
-    next();
-});
+};
 
 exports.getAllLandmarks = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
@@ -104,6 +151,7 @@ exports.getLandmark = catchAsync(async (req, res, next) => {
 
 exports.createLandmark = catchAsync(async (req, res, next) => {
     if (!req.body.category) req.body.category = req.params.categoryId;
+    console.log(req.body.imageCover);
     const newLandmark = await Landmark.create(req.body);
     res.status(201).json({
         status: 'success',
@@ -134,10 +182,6 @@ exports.updateLandmark = catchAsync(async (req, res, next) => {
         new: true,
         runValidators: true,
     });
-
-    if (!landmark) {
-        return next(new AppError('No landmark found with this ID', 404));
-    }
 
     res.status(200).json({
         status: 'success',

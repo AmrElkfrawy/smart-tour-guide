@@ -103,8 +103,7 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
     if (!category) {
         return next(new AppError('No category found with this ID', 404));
     }
-
-    await cloudinary.uploader.destroy(category.imageCoverId);
+    const oldPhotoId = category.imageCoverId;
     const updatedCategory = await Category.findByIdAndUpdate(
         req.params.id,
         req.body,
@@ -113,6 +112,8 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
             runValidators: true,
         }
     );
+
+    await cloudinary.uploader.destroy(category.oldPhotoId);
 
     res.status(200).json({
         status: 'success',

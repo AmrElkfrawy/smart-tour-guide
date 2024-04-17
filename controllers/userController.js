@@ -104,9 +104,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     }
 
     const user = await User.findById(req.user.id);
-    if (user.photoId !== '/users/default') {
-        await cloudinary.uploader.destroy(user.photoId);
-    }
+    const oldPhotoId = user.photoId;
 
     const updatedUser = await User.findByIdAndUpdate(
         req.user.id,
@@ -116,7 +114,9 @@ exports.updateMe = catchAsync(async (req, res, next) => {
             runValidators: true,
         }
     );
-
+    if (oldPhotoId !== '/users/default') {
+        await cloudinary.uploader.destroy(oldPhotoId);
+    }
     res.status(200).json({
         status: 'success',
         data: {
