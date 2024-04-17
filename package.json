@@ -14,6 +14,7 @@
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",
+        "cloudinary": "^2.1.0",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.18.2",
@@ -29,6 +30,7 @@
         "nodemailer": "^6.9.10",
         "sharp": "^0.33.2",
         "slugify": "^1.6.6",
+        "streamifier": "^0.1.1",
         "validator": "^13.11.0",
         "xss-clean": "^0.1.4"
     },
