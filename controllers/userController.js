@@ -10,7 +10,6 @@ if (!fs.existsSync(directory)) {
 
 // Packages
 const multer = require('multer');
-const sharp = require('sharp');
 const streamifier = require('streamifier');
 const cloudinary = require('../utils/cloudinary');
 
@@ -106,7 +105,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 
     const user = await User.findById(req.user.id);
     if (user.photoId !== '/users/default') {
-        await cloudinary.uploader.destroy(req.user.photoId);
+        await cloudinary.uploader.destroy(user.photoId);
     }
 
     const updatedUser = await User.findByIdAndUpdate(

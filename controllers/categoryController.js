@@ -1,5 +1,6 @@
+const cloudinary = require('../utils/cloudinary');
+const streamifier = require('streamifier');
 const multer = require('multer');
-const sharp = require('sharp');
 
 const Category = require('./../models/categoryModel');
 const APIFeatures = require('./../utils/apiFeatures');
@@ -22,19 +23,28 @@ const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 
 exports.uploadCategoryPhoto = upload.single('imageCover');
 
-exports.resizeCategoryPhoto = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
+exports.resizeCategoryPhoto = (req, res, next) => {
+    try {
+        if (!req.file) return next();
 
-    // only admin can upload images
-    req.file.filename = `category-${req.user.id}-${Date.now()}.jpeg`;
-    await sharp(req.file.buffer)
-        .resize(500, 500)
-        .toFormat('jpeg')
-        .jpeg({ quality: 90 })
-        .toFile(`public/img/categories/${req.file.filename}`);
-
-    next();
-});
+        let cld_upload_stream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'categories',
+                transformation: [
+                    { width: 600, height: 600, gravity: 'auto', crop: 'fill' },
+                ],
+            },
+            function (error, result) {
+                req.file.filename = result.secure_url;
+                req.file.photoId = result.public_id;
+                return next();
+            }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(cld_upload_stream);
+    } catch (err) {
+        return next(new AppError(err, 500));
+    }
+};
 
 exports.getAllCategories = catchAsync(async (req, res, next) => {
     // EXECUTE QUERY
@@ -70,7 +80,10 @@ exports.getCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.createCategory = catchAsync(async (req, res, next) => {
-    if (req.file) req.body.imageCover = req.file.filename;
+    if (req.file) {
+        req.body.imageCover = req.file.filename;
+        req.body.imageCoverId = req.file.photoId;
+    }
     const newCategory = await Category.create(req.body);
     res.status(201).json({
         status: 'success',
@@ -81,20 +94,30 @@ exports.createCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
-    if (req.file) req.body.imageCover = req.file.filename;
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-    });
+    if (req.file) {
+        req.body.imageCover = req.file.filename;
+        req.body.imageCoverId = req.file.photoId;
+    }
+    const category = await Category.findById(req.params.id);
 
     if (!category) {
         return next(new AppError('No category found with this ID', 404));
     }
 
+    await cloudinary.uploader.destroy(category.imageCoverId);
+    const updatedCategory = await Category.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {
+            new: true,
+            runValidators: true,
+        }
+    );
+
     res.status(200).json({
         status: 'success',
         data: {
-            category,
+            updatedCategory,
         },
     });
 });

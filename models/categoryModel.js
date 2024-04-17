@@ -19,6 +19,9 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: [true, 'A category must have an image cover'],
     },
+    imageCoverId: {
+        type: String,
+    },
 });
 
 categorySchema.pre('save', function (next) {
