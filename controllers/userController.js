@@ -38,21 +38,6 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 exports.uploadUserPhoto = upload.single('photo');
 
-// if (process.env.NODE_ENV === 'production') {
-//     exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
-//         if (!req.file) return next();
-
-//         req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-//         await sharp(req.file.buffer)
-//             .resize(500, 500)
-//             .toFormat('jpeg')
-//             .jpeg({ quality: 90 })
-//             .toFile(`public/img/users/${req.file.filename}`);
-
-//         next();
-//     });
-// }
-
 exports.resizeUserPhoto = (req, res, next) => {
     try {
         if (!req.file) return next();
@@ -66,6 +51,7 @@ exports.resizeUserPhoto = (req, res, next) => {
             },
             function (error, result) {
                 req.file.filename = result.secure_url;
+                req.file.photoId = result.public_id;
                 return next();
             }
         );
@@ -94,7 +80,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
     if (!user) {
         return next(new AppError('No user found with that ID', 404));
     }
-    res.status(500).json({
+    res.status(200).json({
         status: 'success',
         data: {
             user,
@@ -113,7 +99,15 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     }
 
     const filteredBody = filterObj(req.body, 'name', 'email');
-    if (req.file) filteredBody.photo = req.file.filename;
+    if (req.file) {
+        filteredBody.photo = req.file.filename;
+        filteredBody.photoId = req.file.photoId;
+    }
+
+    const user = await User.findById(req.user.id);
+    if (user.photoId !== '/users/default') {
+        await cloudinary.uploader.destroy(req.user.photoId);
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
         req.user.id,
