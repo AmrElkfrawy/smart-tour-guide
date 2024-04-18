@@ -27,6 +27,9 @@ exports.detect = catchAsync(async (req, res, next) => {
     } else if (req.body.location.toLowerCase() === 'giza') {
         apiUrl =
             'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_GizaVersion1.01';
+    } else if (req.body.location.toLowerCase() === 'cairo') {
+        apiUrl =
+            'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_CairoVersion1.01';
     }
 
     const response = await fetch(apiUrl, {
