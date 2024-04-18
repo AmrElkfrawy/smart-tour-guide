@@ -6,13 +6,34 @@ const handleCastErrorDB = (err) => {
 };
 
 const handleDuplicateFieldsDB = (err) => {
-    let value;
-    if (err.message) {
-        value = err.message.match(/(["'])(\\?.)*?\1/)[0];
-    }
+    try {
+        // old code
+        // let value;
+        // if (err.message) {
+        //     value = err.message.match(/(["'])(\\?.)*?\1/)[0];
+        // }
 
-    const message = `Duplicate field value: ${value}. Please use another value.`;
-    return new AppError(message, 400);
+        const duplicatedFields = [];
+        for (const key in err.keyValue) {
+            if (err.keyPattern.hasOwnProperty(key)) {
+                duplicatedFields.push(key);
+            }
+        }
+
+        // Creating the message
+        let message = '';
+        if (duplicatedFields.length === 1) {
+            message += `This ${duplicatedFields} already exists.`;
+        }
+        if (duplicatedFields.length > 1) {
+            message += 'You cannot post two reviews for the same landmark.';
+        }
+
+        // const message = `Duplicate field value: ${value}. Please use another value.`;
+        return new AppError(message, 409);
+    } catch (err) {
+        return new AppError('Something went wrong', 500);
+    }
 };
 
 const handleValidationErrorDB = (err) => {
