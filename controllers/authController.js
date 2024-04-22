@@ -37,7 +37,75 @@ exports.signup = catchAsync(async (req, res, next) => {
         passwordConfirm: req.body.passwordConfirm,
     });
 
-    createSendToken(newUser, 201, req, res);
+    const verifyEmailToken = newUser.createEmailVerificationToken();
+    await newUser.save({ validateBeforeSave: false });
+
+    try {
+        const verificationURL = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
+        const message = `Welcome to our application! Please verify your email address by clicking the following link: ${verificationURL}`;
+
+        await sendEmail({
+            email: newUser.email,
+            subject: 'Verify your email address',
+            message,
+        });
+        console.log(verificationURL);
+        // Send response indicating successful user creation and send token
+        createSendToken(newUser, 201, req, res, next);
+    } catch (err) {
+        // If there's an error sending the email, handle it
+        newUser.emailVerificationToken = undefined;
+        newUser.verificationTokenExpires = undefined;
+        await newUser.save({ validateBeforeSave: false });
+
+        return next(
+            new AppError(
+                'There was an error sending the verification email. Try again later!',
+                500
+            )
+        );
+    }
+});
+
+exports.verifyEmail = catchAsync(async (req, res, next) => {
+    // Get the verification token from the URL
+    const token = req.params.token;
+
+    // Find the user by the verification token
+    const user = await User.findOne({
+        emailVerificationToken: token,
+        verificationTokenExpires: { $gt: Date.now() },
+    });
+
+    // If user not found or token has expired
+    if (!user) {
+        return next(
+            new AppError('Verification token is invalid or has expired.', 400)
+        );
+    }
+
+    // If the user is already verified, return a message indicating that
+    if (user.emailVerified) {
+        return res.status(200).json({
+            status: 'success',
+            message:
+                'Your email address has already been verified. You can log in.',
+        });
+    }
+
+    // Mark user as email verified
+    user.emailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    // Send response indicating successful email verification
+    res.status(200).json({
+        status: 'success',
+        message: 'Email verification successful. You can now log in.',
+    });
 });
 
 exports.login = catchAsync(async (req, res, next) => {
