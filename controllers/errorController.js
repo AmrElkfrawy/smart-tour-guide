@@ -1,5 +1,24 @@
 const AppError = require('./../utils/appError');
 
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
+
+const deleteRedundantFile = async (file) => {
+    try {
+        if (file !== 'default.jpg') {
+            console.log(file);
+
+            await promisify(fs.unlink)(
+                path.join(__dirname, `../public/img/users/${file}`)
+            );
+        }
+    } catch (err) {
+        console.log(err);
+        return new AppError('Something went wrong', 500);
+    }
+};
+
 const handleCastErrorDB = (err) => {
     const message = `Invalid ${err.path}: ${err.value}.`;
     return new AppError(message, 400);
@@ -78,6 +97,8 @@ const sendErrorProd = (err, req, res) => {
 module.exports = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
+
+    if (req.file) deleteRedundantFile(req.file.filename);
 
     if (process.env.NODE_ENV === 'development') {
         sendErrorDev(err, req, res);
