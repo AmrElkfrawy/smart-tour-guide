@@ -15,6 +15,7 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 
 // protected routes
 router.use(authController.protect);
+router.get('/resendVerificationEmail', authController.resendVerificationEmail);
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
 router.patch(

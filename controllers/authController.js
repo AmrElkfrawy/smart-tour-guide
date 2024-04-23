@@ -73,7 +73,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({ email: req.user.email });
 
     if (!user || user.emailVerified) {
         return next(
@@ -204,7 +204,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     }
 
     // Check if email is verified
-    if (!currentUser.emailVerified) {
+    if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
         return next(
             new AppError(
                 'Please verify your email address to access this resource.',
@@ -242,48 +242,6 @@ exports.restrictTo = (...roles) => {
         next();
     };
 };
-
-// exports.forgotPassword = catchAsync(async (req, res, next) => {
-//     if (!req.body.email) {
-//         return next(new AppError('Please provide email', 400));
-//     }
-//     const user = await User.findOne({ email: req.body.email });
-//     if (!user) {
-//         return next(new AppError('There is no user with that email', 404));
-//     }
-
-//     const resetToken = user.createPasswordResetToken();
-//     await user.save({ validateBeforeSave: false });
-
-//     try {
-//         const resetURL = `${req.protocol}://${req.get(
-//             'host'
-//         )}/api/v1/users/resetPassword/${resetToken}`;
-//         const message = `You can securely reset your password by submitting a PATCH request with your new password and password confirmation at the following link: ${resetURL}.\nIf you didn't initiate this password reset, please disregard this email for security reasons.`;
-
-//         await sendEmail({
-//             email: user.email,
-//             subject: 'Reset password (valid for 10 min)',
-//             message,
-//         });
-
-//         res.status(200).json({
-//             status: 'success',
-//             message: 'Token sent to email!',
-//         });
-//     } catch (err) {
-//         user.passwordResetToken = undefined;
-//         user.passwordResetTokenExpires = undefined;
-//         await user.save({ validateBeforeSave: false });
-
-//         return next(
-//             new AppError(
-//                 'There was an error sending the email. Try again later!'
-//             ),
-//             500
-//         );
-//     }
-// });
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
     if (!req.body.email) {
