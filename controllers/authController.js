@@ -55,13 +55,57 @@ exports.signup = catchAsync(async (req, res, next) => {
         // Send response indicating successful user creation and send token
         newUser.emailVerificationToken = undefined;
         newUser.verificationTokenExpires = undefined;
-        await newUser.save({ validateBeforeSave: false });
         createSendToken(newUser, 201, req, res, next);
     } catch (err) {
         // If there's an error sending the email, handle it
         newUser.emailVerificationToken = undefined;
         newUser.verificationTokenExpires = undefined;
         await newUser.save({ validateBeforeSave: false });
+
+        return next(
+            new AppError(
+                'There was an error sending the verification email. Try again later!',
+                500
+            )
+        );
+    }
+});
+
+exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user || user.emailVerified) {
+        return next(
+            new AppError('User not found or email is already verified.', 400)
+        );
+    }
+
+    const verifyEmailToken = user.createEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    try {
+        const verificationURL = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
+        const message = `Welcome back! Please verify your email address by clicking the following link: ${verificationURL}`;
+
+        await sendEmail({
+            email: user.email,
+            subject: 'Resend Verification Email',
+            message,
+        });
+
+        user.emailVerificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Verification email resent successfully.',
+        });
+    } catch (err) {
+        user.emailVerificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+        await user.save({ validateBeforeSave: false });
 
         return next(
             new AppError(
