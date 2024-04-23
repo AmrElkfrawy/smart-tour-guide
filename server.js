@@ -13,7 +13,7 @@ dotenv.config({ path: './.env' });
 
 const app = require('./app');
 
-const dbConnection = process.env.DB;
+const dbConnection = process.env.DATABASE;
 
 mongoose
     .connect(dbConnection)

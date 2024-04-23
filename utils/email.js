@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
     let transporter;
     if (process.env.NODE_ENV === 'production') {
+        console.log('prod');
         transporter = nodemailer.createTransport({
             host: process.env.BERVO_HOST,
             port: process.env.BERVO_PORT,
@@ -12,6 +13,7 @@ const sendEmail = async (options) => {
             },
         });
     } else {
+        console.log('dev');
         transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
             port: process.env.EMAIL_PORT,

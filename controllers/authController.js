@@ -51,8 +51,11 @@ exports.signup = catchAsync(async (req, res, next) => {
             subject: 'Verify your email address',
             message,
         });
-        console.log(verificationURL);
+
         // Send response indicating successful user creation and send token
+        newUser.emailVerificationToken = undefined;
+        newUser.verificationTokenExpires = undefined;
+        await newUser.save({ validateBeforeSave: false });
         createSendToken(newUser, 201, req, res, next);
     } catch (err) {
         // If there's an error sending the email, handle it
@@ -150,6 +153,16 @@ exports.protect = catchAsync(async (req, res, next) => {
         return next(
             new AppError(
                 'The user belonging to this token does no longer exist.',
+                401
+            )
+        );
+    }
+
+    // Check if email is verified
+    if (!currentUser.emailVerified) {
+        return next(
+            new AppError(
+                'Please verify your email address to access this resource.',
                 401
             )
         );
