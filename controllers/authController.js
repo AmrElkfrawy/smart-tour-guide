@@ -53,6 +53,7 @@ exports.signup = catchAsync(async (req, res, next) => {
         });
 
         // Send response indicating successful user creation and send token
+        await newUser.save({ validateBeforeSave: false });
         newUser.emailVerificationToken = undefined;
         newUser.verificationTokenExpires = undefined;
         createSendToken(newUser, 201, req, res, next);
