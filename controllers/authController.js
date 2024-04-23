@@ -53,9 +53,9 @@ exports.signup = catchAsync(async (req, res, next) => {
         });
 
         // Send response indicating successful user creation and send token
+        await newUser.save({ validateBeforeSave: false });
         newUser.emailVerificationToken = undefined;
         newUser.verificationTokenExpires = undefined;
-        await newUser.save({ validateBeforeSave: false });
         createSendToken(newUser, 201, req, res, next);
     } catch (err) {
         // If there's an error sending the email, handle it
