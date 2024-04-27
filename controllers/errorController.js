@@ -4,13 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const { promisify } = require('util');
 
-const deleteRedundantFile = async (file) => {
+const deleteRedundantFile = async (file, directory) => {
     try {
         if (file !== 'default.jpg') {
-            console.log(file);
-
             await promisify(fs.unlink)(
-                path.join(__dirname, `../public/img/users/${file}`)
+                path.join(__dirname, `../public/img/${directory}/${file}`)
             );
         }
     } catch (err) {
@@ -98,7 +96,28 @@ module.exports = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
-    if (req.file) deleteRedundantFile(req.file.filename);
+    if (req.file) {
+        if (req.file.userFilename)
+            deleteRedundantFile(req.file.userFilename, 'users');
+        if (req.file.categoryFilename)
+            deleteRedundantFile(req.file.categoryFilename, 'categories');
+    }
+
+    if (req.files) {
+        if (req.files.landmarkFilename)
+            deleteRedundantFile(req.files.landmarkFilename, 'landmarks');
+        if (req.files.landmarkFilenames)
+            try {
+                for (const file of req.files.landmarkFilenames) {
+                    deleteRedundantFile(file, 'landmarks');
+                }
+            } catch (err) {
+                res.status(500).json({
+                    status: 'error',
+                    message: 'Something went wrong',
+                });
+            }
+    }
 
     if (process.env.NODE_ENV === 'development') {
         sendErrorDev(err, req, res);

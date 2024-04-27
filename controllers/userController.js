@@ -40,12 +40,12 @@ exports.uploadUserPhoto = upload.single('photo');
 exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     if (!req.file) return next();
 
-    req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+    req.file.userFilename = `user-${req.user.id}-${Date.now()}.jpeg`;
     await sharp(req.file.buffer)
         .resize(500, 500)
         .toFormat('jpeg')
         .jpeg({ quality: 90 })
-        .toFile(`public/img/users/${req.file.filename}`);
+        .toFile(`public/img/users/${req.file.userFilename}`);
 
     next();
 });
@@ -92,7 +92,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     }
 
     const filteredBody = filterObj(req.body, 'name', 'email');
-    if (req.file) filteredBody.photo = req.file.filename;
+    if (req.file) filteredBody.photo = req.file.userFilename;
     console.log('22');
     const updatedUser = await User.findByIdAndUpdate(
         req.user.id,
@@ -105,6 +105,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 
     if (req.file) {
         if (req.file.oldPhoto !== 'default.jpg') {
+            req.file.userFilename = undefined;
             await promisify(fs.unlink)(
                 path.join(__dirname, `../public/img/users/${req.file.oldPhoto}`)
             );
