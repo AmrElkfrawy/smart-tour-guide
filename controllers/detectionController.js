@@ -80,7 +80,8 @@ exports.detect = catchAsync(async (req, res, next) => {
         });
 
         const prompt = `Suppose you are a egyptian tour guide and historian. Can you tell me the name of this monument \
-        make your answer in form of JSON object. first key is label and value is the name, \
+        make your answer in form of JSON object. first key is label and value is the name, if the photo is not in landmark in egypt make the label as "none".\
+        the second key is description and value is some information about the landmark. again if it's not a landmark in egypt make the description as "none".
         Please don't add any other words. and don't change the format because it will not work for me.`;
 
         const image = {
