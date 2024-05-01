@@ -1,3 +1,7 @@
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
+
 const Landmark = require('./../models/landmarkModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
@@ -35,6 +39,7 @@ exports.resizeLandmarkPhoto = catchAsync(async (req, res, next) => {
         req.body.imageCover = `landmark-${
             req.user.id
         }-${Date.now()}-cover.jpeg`;
+        req.files.landmarkFilename = req.body.imageCover;
         await sharp(req.files.imageCover[0].buffer)
             .resize(500, 500)
             .toFormat('jpeg')
@@ -57,6 +62,7 @@ exports.resizeLandmarkPhoto = catchAsync(async (req, res, next) => {
                 req.body.images.push(imageName);
             })
         );
+        req.files.landmarkFilenames = req.body.images;
     }
     next();
 });
@@ -114,20 +120,44 @@ exports.createLandmark = catchAsync(async (req, res, next) => {
 });
 
 exports.updateLandmark = catchAsync(async (req, res, next) => {
-    if (req.body.editedImages) {
+    if (req.files) {
         const landmark = await Landmark.findById(req.params.id);
         if (!landmark) {
             return next(new AppError('No landmark found with this ID', 404));
         }
+        if (req.files.imageCover) req.files.oldImageCover = landmark.imageCover;
+        if (req.files.images) req.files.oldImages = [];
 
-        for (let i = 0; i < Math.min(3, req.body.editedImages.length); i++) {
-            if (![0, 1, 2].includes(parseInt(req.body.editedImages[i]))) {
-                req.body.editedImages[i] = i;
+        if (req.body.editedImages) {
+            if (
+                req.body.editedImages &&
+                req.body.images &&
+                req.body.editedImages.length !== req.body.images.length
+            ) {
+                return next(
+                    new AppError(
+                        'editedImages must be of same length of uploaded images',
+                        400
+                    )
+                );
             }
-            landmark.images[parseInt(req.body.editedImages[i])] =
-                req.body.images[i];
+
+            for (
+                let i = 0;
+                i < Math.min(3, req.body.editedImages.length);
+                i++
+            ) {
+                if (![0, 1, 2].includes(parseInt(req.body.editedImages[i]))) {
+                    req.body.editedImages[i] = i;
+                }
+                req.files.oldImages.push(
+                    landmark.images[parseInt(req.body.editedImages[i])]
+                );
+                landmark.images[parseInt(req.body.editedImages[i])] =
+                    req.body.images[i];
+            }
+            req.body.images = landmark.images;
         }
-        req.body.images = landmark.images;
     }
 
     const landmark = await Landmark.findByIdAndUpdate(req.params.id, req.body, {
@@ -137,6 +167,27 @@ exports.updateLandmark = catchAsync(async (req, res, next) => {
 
     if (!landmark) {
         return next(new AppError('No landmark found with this ID', 404));
+    }
+
+    if (req.files) {
+        if (req.files.oldImageCover) {
+            req.files.landmarkFilename = undefined;
+            await promisify(fs.unlink)(
+                path.join(
+                    __dirname,
+                    `../public/img/landmarks/${req.files.oldImageCover}`
+                )
+            );
+        }
+
+        if (req.files.oldImages) {
+            req.files.landmarkFilenames = undefined;
+            for (const file of req.files.oldImages) {
+                await promisify(fs.unlink)(
+                    path.join(__dirname, `../public/img/landmarks/${file}`)
+                );
+            }
+        }
     }
 
     res.status(200).json({

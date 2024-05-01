@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
 
 const directory = 'public/img/users';
 
@@ -39,12 +40,12 @@ exports.uploadUserPhoto = upload.single('photo');
 exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     if (!req.file) return next();
 
-    req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+    req.file.userFilename = `user-${req.user.id}-${Date.now()}.jpeg`;
     await sharp(req.file.buffer)
         .resize(500, 500)
         .toFormat('jpeg')
         .jpeg({ quality: 90 })
-        .toFile(`public/img/users/${req.file.filename}`);
+        .toFile(`public/img/users/${req.file.userFilename}`);
 
     next();
 });
@@ -77,6 +78,10 @@ exports.getUser = catchAsync(async (req, res, next) => {
 });
 
 exports.updateMe = catchAsync(async (req, res, next) => {
+    if (req.file) {
+        const user = await User.findById(req.user.id);
+        req.file.oldPhoto = user.photo;
+    }
     if (req.body.password || req.body.passwordConfirm) {
         return next(
             new AppError(
@@ -87,8 +92,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     }
 
     const filteredBody = filterObj(req.body, 'name', 'email');
-    if (req.file) filteredBody.photo = req.file.filename;
-
+    if (req.file) filteredBody.photo = req.file.userFilename;
+    console.log('22');
     const updatedUser = await User.findByIdAndUpdate(
         req.user.id,
         filteredBody,
@@ -97,6 +102,15 @@ exports.updateMe = catchAsync(async (req, res, next) => {
             runValidators: true,
         }
     );
+
+    if (req.file) {
+        if (req.file.oldPhoto !== 'default.jpg') {
+            req.file.userFilename = undefined;
+            await promisify(fs.unlink)(
+                path.join(__dirname, `../public/img/users/${req.file.oldPhoto}`)
+            );
+        }
+    }
 
     res.status(200).json({
         status: 'success',
