@@ -36,7 +36,9 @@ exports.signup = catchAsync(async (req, res, next) => {
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
     });
+    createSendToken(newUser, 201, req, res, next);
 
+    /*
     const verifyEmailToken = newUser.createEmailVerificationToken();
 
     try {
@@ -68,10 +70,14 @@ exports.signup = catchAsync(async (req, res, next) => {
                 500
             )
         );
-    }
+    }*/
 });
 
 exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Verification email resent successfully.',
+    });
     const user = await User.findOne({ email: req.user.email });
 
     if (!user) {
@@ -201,7 +207,7 @@ exports.protect = catchAsync(async (req, res, next) => {
             )
         );
     }
-
+    /*
     // Check if email is verified
     if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
         return next(
@@ -211,6 +217,7 @@ exports.protect = catchAsync(async (req, res, next) => {
             )
         );
     }
+    */
 
     // check if token issued before changing password
     if (currentUser.changedPasswordAfter(decoded.iat)) {
