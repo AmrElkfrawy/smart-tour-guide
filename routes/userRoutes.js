@@ -6,12 +6,15 @@ const userController = require('./../controllers/userController');
 const router = express.Router();
 
 router.post('/signup', authController.signup);
+router.get('/verifyEmail/:token', authController.verifyEmail);
 router.post('/login', authController.login);
 router.post('/forgotPassword', authController.forgotPassword);
+router.post('/verifyResetCode', authController.verifyResetCode);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
 // protected routes
 router.use(authController.protect);
+router.post('/resendVerificationEmail', authController.resendVerificationEmail);
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
 router.patch(

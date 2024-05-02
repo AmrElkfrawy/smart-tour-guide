@@ -42,7 +42,21 @@ const userSchema = new mongoose.Schema({
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
-    passwordResetExpires: Date,
+    passwordResetTokenExpires: Date,
+    passwordResetCode: String,
+    passwordResetCodeExpires: Date,
+    emailVerificationToken: {
+        type: String,
+        select: false,
+    },
+    verificationTokenExpires: {
+        type: Date,
+        select: false,
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false,
+    },
     active: {
         type: Boolean,
         default: true,
@@ -99,8 +113,29 @@ userSchema.methods.createPasswordResetToken = function () {
         .createHash('sha256')
         .update(resetToken)
         .digest('hex');
-    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+    this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
     return resetToken;
+};
+
+userSchema.methods.createPasswordResetCode = function () {
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit random code
+
+    this.passwordResetCode = resetCode;
+    this.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
+    return resetCode;
+};
+
+userSchema.methods.createEmailVerificationToken = function () {
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    this.emailVerificationToken = crypto
+        .createHash('sha256')
+        .update(verificationToken)
+        .digest('hex');
+
+    this.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // Expires in 24 hours
+
+    return verificationToken;
 };
 
 const User = mongoose.model('User', userSchema);
