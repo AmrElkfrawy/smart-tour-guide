@@ -128,7 +128,10 @@ userSchema.methods.createPasswordResetCode = function () {
 userSchema.methods.createEmailVerificationToken = function () {
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    this.emailVerificationToken = verificationToken;
+    this.emailVerificationToken = crypto
+        .createHash('sha256')
+        .update(verificationToken)
+        .digest('hex');
 
     this.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // Expires in 24 hours
 
