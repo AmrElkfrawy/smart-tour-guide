@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
 const multer = require('multer');
 const sharp = require('sharp');
 
@@ -26,12 +29,12 @@ exports.resizeCategoryPhoto = catchAsync(async (req, res, next) => {
     if (!req.file) return next();
 
     // only admin can upload images
-    req.file.filename = `category-${req.user.id}-${Date.now()}.jpeg`;
+    req.file.categoryFilename = `category-${req.user.id}-${Date.now()}.jpeg`;
     await sharp(req.file.buffer)
         .resize(500, 500)
         .toFormat('jpeg')
         .jpeg({ quality: 90 })
-        .toFile(`public/img/categories/${req.file.filename}`);
+        .toFile(`public/img/categories/${req.file.categoryFilename}`);
 
     next();
 });
@@ -70,7 +73,7 @@ exports.getCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.createCategory = catchAsync(async (req, res, next) => {
-    if (req.file) req.body.imageCover = req.file.filename;
+    if (req.file) req.body.imageCover = req.file.categoryFilename;
     const newCategory = await Category.create(req.body);
     res.status(201).json({
         status: 'success',
@@ -81,7 +84,12 @@ exports.createCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
-    if (req.file) req.body.imageCover = req.file.filename;
+    if (req.file) {
+        const category = await Category.findById(req.params.id);
+        req.file.oldPhoto = category.imageCover;
+        req.body.imageCover = req.file.categoryFilename;
+    }
+
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true,
@@ -89,6 +97,16 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
 
     if (!category) {
         return next(new AppError('No category found with this ID', 404));
+    }
+
+    if (req.file) {
+        req.file.categoryFilename = undefined;
+        await promisify(fs.unlink)(
+            path.join(
+                __dirname,
+                `../public/img/categories/${req.file.oldPhoto}`
+            )
+        );
     }
 
     res.status(200).json({

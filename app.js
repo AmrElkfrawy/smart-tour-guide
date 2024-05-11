@@ -59,9 +59,6 @@ const limiter = rateLimit({
 });
 // protect from dos
 app.use('/api', limiter);
-if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
-}
 
 app.use((req, res, next) => {
     req.requestTime = new Date().toISOString();
