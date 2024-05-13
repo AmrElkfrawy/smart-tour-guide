@@ -36,9 +36,10 @@ exports.signup = catchAsync(async (req, res, next) => {
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
     });
+    createSendToken(newUser, 201, req, res, next);
 
+    /*
     const verifyEmailToken = newUser.createEmailVerificationToken();
-    await newUser.save({ validateBeforeSave: false });
 
     try {
         const verificationURL = `${req.protocol}://${req.get(
@@ -69,19 +70,25 @@ exports.signup = catchAsync(async (req, res, next) => {
                 500
             )
         );
-    }
+    }*/
 });
 
 exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Verification email resent successfully.',
+    });
     const user = await User.findOne({ email: req.user.email });
 
-    if (!user || user.emailVerified) {
-        return next(
-            new AppError('User not found or email is already verified.', 400)
-        );
+    if (!user) {
+        return next(new AppError('User not found', 400));
+    }
+    if (user.emailVerified) {
+        return next(new AppError('Email is already verified', 400));
     }
 
     const verifyEmailToken = user.createEmailVerificationToken();
+
     await user.save({ validateBeforeSave: false });
 
     try {
@@ -89,15 +96,11 @@ exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
             'host'
         )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
         const message = `Welcome back! Please verify your email address by clicking the following link: ${verificationURL}`;
-
         await sendEmail({
             email: user.email,
             subject: 'Resend Verification Email',
             message,
         });
-
-        user.emailVerificationToken = undefined;
-        user.verificationTokenExpires = undefined;
 
         res.status(200).json({
             status: 'success',
@@ -118,8 +121,10 @@ exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
 });
 
 exports.verifyEmail = catchAsync(async (req, res, next) => {
-    // Get the verification token from the URL
-    const token = req.params.token;
+    const token = crypto
+        .createHash('sha256')
+        .update(req.params.token)
+        .digest('hex');
 
     // Find the user by the verification token
     const user = await User.findOne({
@@ -202,7 +207,7 @@ exports.protect = catchAsync(async (req, res, next) => {
             )
         );
     }
-
+    /*
     // Check if email is verified
     if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
         return next(
@@ -212,6 +217,7 @@ exports.protect = catchAsync(async (req, res, next) => {
             )
         );
     }
+    */
 
     // check if token issued before changing password
     if (currentUser.changedPasswordAfter(decoded.iat)) {
@@ -259,7 +265,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
         const message = `Your password reset code is ${resetCode}. Please use this code to reset your password.`;
         await sendEmail({
             email: user.email,
-            subject: 'Reset password (valid for 2 mins)',
+            subject: 'Reset password (valid for 10 mins)',
             message,
         });
 
@@ -294,6 +300,8 @@ exports.verifyResetCode = catchAsync(async (req, res, next) => {
     }
 
     const resetToken = user.createPasswordResetToken();
+    user.passwordResetCode = undefined;
+    user.passwordResetCodeExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
