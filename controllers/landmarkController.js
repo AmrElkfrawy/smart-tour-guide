@@ -6,6 +6,7 @@ const Landmark = require('./../models/landmarkModel');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+const factory = require('./handlerFactory');
 
 const multer = require('multer');
 const sharp = require('sharp');
@@ -67,57 +68,22 @@ exports.resizeLandmarkPhoto = catchAsync(async (req, res, next) => {
     next();
 });
 
-exports.getAllLandmarks = catchAsync(async (req, res, next) => {
-    // EXECUTE QUERY
+exports.setCategoryIdToParams = (req, res, next) => {
     if (!req.params && !req.params.categoryId)
-        req.params.query.categoryId = req.body.category;
-    let filter = {};
-    if (req.params.categoryId) filter = { category: req.params.categoryId };
-    const features = new APIFeatures(Landmark.find(filter), req.query)
-        .filter()
-        .sort()
-        .limitFields()
-        .paginate();
+        req.params.categoryId = req.body.category;
 
-    const landmarks = await features.query;
-    // const landmarks = await features.query.explain();
+    next();
+};
 
-    // SEND RESPONSE
-    res.status(200).json({
-        status: 'success',
-        requestedAt: req.requestTime,
-        results: landmarks.length,
-        data: {
-            landmarks,
-        },
-    });
-});
-
-exports.getLandmark = catchAsync(async (req, res, next) => {
-    const landmark = await Landmark.findById(req.params.id).populate('reviews');
-
-    if (!landmark) {
-        return next(new AppError('No landmark found with this ID', 404));
-    }
-
-    res.status(200).json({
-        status: 'success',
-        data: {
-            landmark,
-        },
-    });
-});
-
-exports.createLandmark = catchAsync(async (req, res, next) => {
+exports.setCategoryIdToBody = (req, res, next) => {
     if (!req.body.category) req.body.category = req.params.categoryId;
-    const newLandmark = await Landmark.create(req.body);
-    res.status(201).json({
-        status: 'success',
-        data: {
-            landmark: newLandmark,
-        },
-    });
-});
+    next();
+};
+
+exports.getAllLandmarks = factory.getAll(Landmark);
+exports.getLandmark = factory.getOne(Landmark);
+exports.createLandmark = factory.createOne(Landmark);
+exports.deleteLandmark = factory.deleteOne(Landmark);
 
 exports.updateLandmark = catchAsync(async (req, res, next) => {
     if (req.files) {
@@ -195,19 +161,6 @@ exports.updateLandmark = catchAsync(async (req, res, next) => {
         data: {
             landmark,
         },
-    });
-});
-
-exports.deleteLandmark = catchAsync(async (req, res, next) => {
-    const landmark = await Landmark.findByIdAndDelete(req.params.id);
-
-    if (!landmark) {
-        return next(new AppError('No landmark found with this ID', 404));
-    }
-
-    res.status(204).json({
-        status: 'success',
-        data: null,
     });
 });
 

@@ -9,6 +9,8 @@ const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
+const factory = require('./handlerFactory');
+
 const fileStorage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image')) {
@@ -39,49 +41,15 @@ exports.resizeCategoryPhoto = catchAsync(async (req, res, next) => {
     next();
 });
 
-exports.getAllCategories = catchAsync(async (req, res, next) => {
-    // EXECUTE QUERY
-    const features = new APIFeatures(Category.find(), req.query)
-        .filter()
-        .sort()
-        .limitFields()
-        .paginate();
-    const categories = await features.query;
-
-    // SEND RESPONSE
-    res.status(200).json({
-        status: 'success',
-        requestedAt: req.requestTime,
-        results: categories.length,
-        data: {
-            categories,
-        },
-    });
-});
-
-exports.getCategory = catchAsync(async (req, res, next) => {
-    const category = await Category.findById(req.params.id);
-    if (!category) {
-        return next(new AppError('No category found with that ID', 404));
-    }
-    res.status(200).json({
-        status: 'success',
-        data: {
-            category,
-        },
-    });
-});
-
-exports.createCategory = catchAsync(async (req, res, next) => {
+exports.setImageCoverToBody = (req, res, next) => {
     if (req.file) req.body.imageCover = req.file.categoryFilename;
-    const newCategory = await Category.create(req.body);
-    res.status(201).json({
-        status: 'success',
-        data: {
-            category: newCategory,
-        },
-    });
-});
+    next();
+};
+
+exports.getAllCategories = factory.getAll(Category);
+exports.getCategory = factory.getOne(Category);
+exports.createCategory = factory.createOne(Category);
+exports.deleteCategory = factory.deleteOne(Category);
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
     if (req.file) {
@@ -114,18 +82,5 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
         data: {
             category,
         },
-    });
-});
-
-exports.deleteCategory = catchAsync(async (req, res, next) => {
-    const category = await Category.findByIdAndDelete(req.params.id);
-
-    if (!category) {
-        return next(new AppError('No category found with this ID', 404));
-    }
-
-    res.status(204).json({
-        status: 'success',
-        data: null,
     });
 });

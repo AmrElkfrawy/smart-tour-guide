@@ -21,6 +21,8 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const APIFeatures = require('./../utils/apiFeatures');
 
+const factory = require('./handlerFactory');
+
 const fileStorage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -62,20 +64,6 @@ exports.getMe = (req, res, next) => {
     req.params.id = req.user.id;
     next();
 };
-
-exports.getUser = catchAsync(async (req, res, next) => {
-    const id = req.params.id;
-    const user = await User.findById(id);
-    if (!user) {
-        return next(new AppError('No user found with that ID', 404));
-    }
-    res.status(200).json({
-        status: 'success',
-        data: {
-            user,
-        },
-    });
-});
 
 exports.updateMe = catchAsync(async (req, res, next) => {
     if (req.file) {
@@ -129,45 +117,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-    const features = new APIFeatures(User.find(), req.query)
-        .filter()
-        .sort()
-        .limitFields()
-        .paginate();
-
-    const users = await features.query;
-    res.status(200).json({
-        status: 'success',
-        results: users.length,
-        data: {
-            users,
-        },
-    });
-});
-
-exports.updateUser = catchAsync(async (req, res, next) => {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-    });
-    if (!user) {
-        return next(new AppError('No user found with that ID', 404));
-    }
-    res.status(200).json({
-        status: 'success',
-        data: {
-            user,
-        },
-    });
-});
-
-exports.deleteUser = catchAsync(async (req, res, next) => {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-        return next(new AppError('No user found with that ID', 404));
-    }
-    res.status(204).json({
-        status: 'success',
-        data: null,
-    });
-});
+exports.getAllUsers = factory.getAll(User);
+exports.getUser = factory.getOne(User);
+exports.updateUser = factory.updateOne(User);
+exports.deleteUser = factory.deleteOne(User);

@@ -8,12 +8,16 @@ const router = express.Router({ mergeParams: true });
 
 router
     .route('/')
-    .get(landmarkController.getAllLandmarks)
+    .get(
+        landmarkController.setCategoryIdToParams,
+        landmarkController.getAllLandmarks
+    )
     .post(
         authController.protect,
         authController.restrictTo('admin'),
         landmarkController.uploadLandmarkPhoto,
         landmarkController.resizeLandmarkPhoto,
+        landmarkController.setCategoryIdToBody,
         landmarkController.createLandmark
     );
 router.get('/most-visited', landmarkController.getMostVisitedLandmarks);
