@@ -35,7 +35,7 @@ exports.getMyTourRequests = catchAsync(async (req, res, next) => {
     });
 });
 
-exports.getTourRequestById = catchAsync(async (req, res, next) => {
+exports.getMyTourRequestById = catchAsync(async (req, res, next) => {
     const request = await CustomizedTour.findOne({
         user: req.user.id,
         _id: req.params.id,

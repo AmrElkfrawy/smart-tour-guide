@@ -16,7 +16,7 @@ router.get(
 router.get(
     '/my-requests/:id',
     authController.restrictTo('user'),
-    customizedTourController.getTourRequestById
+    customizedTourController.getMyTourRequestById
 );
 
 router.get(
