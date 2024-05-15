@@ -69,7 +69,7 @@ router
         customizedTourController.updateCustomizedTour
     )
     .delete(
-        authController.restrictTo('user', 'admin'),
+        authController.restrictTo('admin'),
         customizedTourController.deleteCustomizedTour
     );
 
