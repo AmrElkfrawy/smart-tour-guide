@@ -22,7 +22,7 @@ exports.getMyTourRequests = catchAsync(async (req, res, next) => {
     ).filter();
 
     const requests = await features.query;
-
+    console.log(requests);
     if (!requests) {
         return next(new AppError('No requests found', 404));
     }
@@ -36,7 +36,7 @@ exports.getMyTourRequests = catchAsync(async (req, res, next) => {
 });
 
 exports.getTourRequestById = catchAsync(async (req, res, next) => {
-    const request = await CustomizedTour.find({
+    const request = await CustomizedTour.findOne({
         user: req.user.id,
         _id: req.params.id,
     });
@@ -126,26 +126,6 @@ exports.getCancelledTourRequests = catchAsync(async (req, res, next) => {
             403
         )
     );
-});
-
-exports.getMyTourRequestsByStatus = catchAsync(async (req, res, next) => {
-    const { status } = req.query;
-
-    const requests = await CustomizedTour.find({ user: req.user.id, status });
-
-    if (!requests) {
-        return next(
-            new AppError('No requests found with the specified status', 400)
-        );
-    }
-
-    res.status(200).json({
-        status: 'success',
-        results: requests.length,
-        data: {
-            requests,
-        },
-    });
 });
 
 exports.respondToTourRequest = catchAsync(async (req, res, next) => {
