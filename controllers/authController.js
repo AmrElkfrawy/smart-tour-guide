@@ -265,7 +265,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
         const message = `Your password reset code is ${resetCode}. Please use this code to reset your password.`;
         await sendEmail({
             email: user.email,
-            subject: 'Reset password (valid for 10 mins)',
+            subject: 'Reset password (valid for 2 mins)',
             message,
         });
 

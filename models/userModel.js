@@ -121,7 +121,7 @@ userSchema.methods.createPasswordResetCode = function () {
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit random code
 
     this.passwordResetCode = resetCode;
-    this.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
+    this.passwordResetCodeExpires = Date.now() + 2 * 60 * 1000;
     return resetCode;
 };
 
