@@ -2,34 +2,44 @@ const landmarkModel = require('./landmarkModel');
 
 const mongoose = require('mongoose');
 
-const reviewSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the user who left the review
-        required: [true, 'Review must have user'],
+const reviewSchema = new mongoose.Schema(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User', // Reference to the user who left the review
+            required: [true, 'Review must have user'],
+        },
+        landmark: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Landmark', // Reference to the landmark being reviewed
+        },
+        tour: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Tour', // Reference to the tour being reviewed
+        },
+        guide: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User', // Reference to the guide being reviewed
+        },
+        rating: {
+            type: Number,
+            required: true,
+            min: [1, 'Rating must be at least 1'],
+            max: [5, 'Rating must be at most 5'],
+        },
+        comment: {
+            type: String,
+            required: true,
+        },
     },
-    landmark: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Landmark', // Reference to the landmark being reviewed
-        required: [true, 'Review must have landmark'],
-    },
-    rating: {
-        type: Number,
-        required: true,
-        min: [1, 'Rating must be at least 1'],
-        max: [5, 'Rating must be at most 5'],
-    },
-    comment: {
-        type: String,
-        required: true,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+    {
+        timestamps: true,
+    }
+);
 
-reviewSchema.index({ landmark: 1, user: 1 }, { unique: true });
+reviewSchema.index({ user: 1, landmark: 1 });
+reviewSchema.index({ user: 1, tour: 1 });
+reviewSchema.index({ user: 1, guide: 1 });
 
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
