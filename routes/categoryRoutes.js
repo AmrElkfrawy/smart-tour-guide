@@ -14,7 +14,6 @@ router
         authController.restrictTo('admin'),
         categoryController.uploadCategoryPhoto,
         categoryController.resizeCategoryPhoto,
-        categoryController.setImageCoverToBody,
         categoryController.createCategory
     );
 

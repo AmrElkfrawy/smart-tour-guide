@@ -20,10 +20,6 @@ const landmarkSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
-        imageCover: {
-            type: String,
-            required: [true, 'A landmark must have an image cover'],
-        },
         images: [String],
         category: {
             type: mongoose.Schema.Types.ObjectId,

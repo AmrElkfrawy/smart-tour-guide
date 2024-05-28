@@ -33,7 +33,10 @@ class APIFeatures {
         }
 
         if (this.queryString.search) {
-            const searchRegex = new RegExp('^' + this.queryString.search, 'i');
+            const searchRegex = new RegExp(
+                '\\b' + this.queryString.search,
+                'i'
+            );
             this.query = this.query.find({ name: searchRegex });
         }
 

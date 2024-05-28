@@ -28,14 +28,26 @@ router
     .patch(
         authController.protect,
         authController.restrictTo('admin'),
-        landmarkController.uploadLandmarkPhoto,
-        landmarkController.resizeLandmarkPhoto,
         landmarkController.updateLandmark
     )
     .delete(
         authController.protect,
         authController.restrictTo('admin'),
         landmarkController.deleteLandmark
+    );
+router
+    .route('/:id/images')
+    .patch(
+        authController.protect,
+        authController.restrictTo('admin'),
+        landmarkController.uploadLandmarkPhoto,
+        landmarkController.resizeLandmarkPhoto,
+        landmarkController.updateLandmarkImages
+    )
+    .delete(
+        authController.protect,
+        authController.restrictTo('admin'),
+        landmarkController.deleteLandmarkImages
     );
 
 router.use('/:landmarkId/reviews', reviewRouter);
