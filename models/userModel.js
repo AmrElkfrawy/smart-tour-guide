@@ -65,6 +65,31 @@ const userSchema = new mongoose.Schema({
     interests: {
         type: [String],
     },
+    // Fields specific to guides
+    bio: {
+        type: String,
+    },
+    languages: {
+        type: [String],
+    },
+    cities: {
+        type: [String],
+    },
+    gallery: {
+        type: [String],
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    rating: {
+        type: Number,
+        default: 0,
+    },
+    ratingQuantity: {
+        type: Number,
+        default: 0,
+    },
 });
 
 userSchema.pre('save', async function (next) {

@@ -45,6 +45,12 @@ router.patch(
     customizedTourController.respondToTourGuide
 );
 
+router.get(
+    '/:tourId/browse-guides',
+    authController.restrictTo('user'),
+    customizedTourController.findGuidesForTourRequest
+);
+
 // Routes for CRUD operations on customized tours
 router
     .route('/')

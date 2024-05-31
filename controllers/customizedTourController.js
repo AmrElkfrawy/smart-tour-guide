@@ -1,4 +1,6 @@
 const CustomizedTour = require('../models/customizedTourModel');
+const User = require('../models/userModel');
+
 const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -22,7 +24,7 @@ exports.getMyTourRequests = catchAsync(async (req, res, next) => {
     ).filter();
 
     const requests = await features.query;
-    console.log(requests);
+
     if (!requests) {
         return next(new AppError('No requests found', 404));
     }
@@ -215,5 +217,36 @@ exports.respondToTourGuide = catchAsync(async (req, res, next) => {
         data: {
             tourRequest,
         },
+    });
+});
+
+exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
+    const request = await CustomizedTour.findOne({
+        _id: req.params.tourId,
+        user: req.user.id,
+        status: 'pending',
+    });
+    console.log(request);
+    if (!request) {
+        return next(new AppError('No request found with this id', 404));
+    }
+
+    const features = new APIFeatures(
+        User.find({
+            languages: { $all: request.spokenLanguages },
+            cities: { $in: [request.city] },
+        }),
+        req.query
+    )
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+    const availableGuides = await features.query;
+
+    res.status(200).json({
+        status: 'success',
+        results: availableGuides.length,
+        availableGuides,
     });
 });
