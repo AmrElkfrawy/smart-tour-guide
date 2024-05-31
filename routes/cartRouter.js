@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(authController.protect, authController.restrictTo('user'));
 router
     .route('/')
-    .get(cartController.getCart)
+    .get(cartController.getLoggedUserCart)
     .post(cartController.addTourToCart)
     .delete(cartController.clearCart);
 
