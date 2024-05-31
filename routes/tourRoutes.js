@@ -3,7 +3,7 @@ const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
 const reviewRouter = require('./reviewRoutes');
 
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
 
 router
     .route('/')
@@ -46,3 +46,5 @@ router
     );
 
 router.use('/:tourId/reviews', reviewRouter);
+
+module.exports = router;
