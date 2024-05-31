@@ -12,7 +12,8 @@ router
     .get(reviewController.getAllReviews)
     .post(
         authController.restrictTo('user'),
-        reviewController.setLandmarkUserIDs,
+        reviewController.setSubjectAndUserIDs,
+        reviewController.checkReviewPermission,
         reviewController.createReview
     );
 

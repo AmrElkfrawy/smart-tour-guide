@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    ratingQuantity: {
+    ratingsQuantity: {
         type: Number,
         default: 0,
     },

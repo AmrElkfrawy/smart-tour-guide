@@ -1,17 +1,23 @@
-const landmarkModel = require('./landmarkModel');
-
 const mongoose = require('mongoose');
+const User = require('./userModel');
+const Landmark = require('./landmarkModel');
+// const Tour = require('./tourModel');
 
 const reviewSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the user who left the review
-        required: [true, 'Review must have user'],
+        ref: 'User',
+        required: [true, 'Review must have a user'],
     },
-    landmark: {
+    reviewType: {
+        type: String,
+        enum: ['Landmark', 'User', 'Tour'],
+        required: [true, 'Review must have a type'],
+    },
+    subject: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Landmark', // Reference to the landmark being reviewed
-        required: [true, 'Review must have landmark'],
+        required: [true, 'Review must have a subject'],
+        refPath: 'reviewType',
     },
     rating: {
         type: Number,
@@ -29,7 +35,22 @@ const reviewSchema = new mongoose.Schema({
     },
 });
 
-reviewSchema.index({ landmark: 1, user: 1 }, { unique: true });
+// Ensure unique review per user, subject, and reviewType
+reviewSchema.index({ subject: 1, user: 1, reviewType: 1 }, { unique: true });
+
+reviewSchema.pre('save', async function (next) {
+    if (this.reviewType === 'User') {
+        const guide = await User.findById(this.subject);
+        if (!guide || guide.role !== 'guide') {
+            return next(
+                new Error(
+                    'Reviews can only be left for users with the guide role'
+                )
+            );
+        }
+    }
+    next();
+});
 
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
@@ -38,39 +59,54 @@ reviewSchema.pre(/^find/, function (next) {
     });
     next();
 });
-reviewSchema.statics.calcAverageRatings = async function (landmarkId) {
+
+reviewSchema.statics.calcAverageRatings = async function (
+    subjectId,
+    reviewType
+) {
     const stats = await this.aggregate([
         {
-            $match: { landmark: landmarkId },
+            $match: { subject: subjectId, reviewType: reviewType },
         },
         {
             $group: {
-                _id: '$landmark',
+                _id: '$subject',
                 nRating: { $sum: 1 },
                 avgRating: { $avg: '$rating' },
             },
         },
     ]);
-    // console.log(stats);
-    if (stats.length > 0) {
-        await landmarkModel.findByIdAndUpdate(landmarkId, {
-            ratingsQuantity: stats[0].nRating,
-            rating: stats[0].avgRating,
-        });
-    } else {
-        await landmarkModel.findByIdAndUpdate(landmarkId, {
-            ratingsQuantity: 0,
-            rating: 4,
-        });
+
+    const updateData =
+        stats.length > 0
+            ? {
+                  ratingsQuantity: stats[0].nRating,
+                  rating: stats[0].avgRating,
+              }
+            : {
+                  ratingsQuantity: 0,
+                  rating: 4,
+              };
+
+    let Model;
+
+    if (reviewType === 'Landmark') {
+        Model = landmarkModel;
+    } else if (reviewType === 'User') {
+        Model = User;
     }
+    // else if (reviewType === 'Tour') {
+    //     Model = Tour;
+    // }
+    await Model.findByIdAndUpdate(subjectId, updateData);
 };
 
 reviewSchema.post('save', function () {
-    this.constructor.calcAverageRatings(this.landmark);
+    this.constructor.calcAverageRatings(this.subject, this.reviewType);
 });
 
 reviewSchema.post(/^findOneAnd/, async (doc) => {
-    await doc.constructor.calcAverageRatings(doc.landmark);
+    await doc.constructor.calcAverageRatings(doc.subject, doc.reviewType);
 });
 
 const Review = mongoose.model('Review', reviewSchema);
