@@ -226,7 +226,7 @@ exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
         user: req.user.id,
         status: 'pending',
     });
-    console.log(request);
+
     if (!request) {
         return next(new AppError('No request found with this id', 404));
     }
@@ -242,11 +242,97 @@ exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
         .sort()
         .limitFields()
         .paginate();
+
     const availableGuides = await features.query;
 
     res.status(200).json({
         status: 'success',
         results: availableGuides.length,
         availableGuides,
+    });
+});
+
+exports.sendRequestToGuide = catchAsync(async (req, res, next) => {
+    const { tourId, guideId } = req.params;
+
+    const tourRequest = await CustomizedTour.findOne({
+        _id: tourId,
+        user: req.user.id,
+        status: 'pending',
+    });
+
+    if (!tourRequest) {
+        return next(new AppError('No request found with this id', 404));
+    }
+
+    // Check if the guide is in the list of available guides
+    const guide = await User.findOne({
+        _id: guideId,
+        languages: { $all: tourRequest.spokenLanguages },
+        cities: { $in: [tourRequest.city] },
+    });
+
+    if (!guide) {
+        return next(
+            new AppError(
+                'Guide not found or does not match the tour preferences',
+                404
+            )
+        );
+    }
+
+    if (!tourRequest.sentRequests.includes(guideId)) {
+        tourRequest.sentRequests.push(guideId);
+        await tourRequest.save({ validateBeforeSave: false });
+    }
+
+    if (!guide.tourRequests.includes(tourId)) {
+        guide.tourRequests.push(tourId);
+        await guide.save({ validateBeforeSave: false });
+    }
+
+    // TODO: A notification must be sent to tour guide, Guide will accept or cancel
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Request sent.',
+        tourRequest,
+    });
+});
+
+exports.cancelRequestToGuide = catchAsync(async (req, res, next) => {
+    const { tourId, guideId } = req.params;
+
+    const tourRequest = await CustomizedTour.findOne({
+        _id: tourId,
+        user: req.user.id,
+        status: 'pending',
+    });
+
+    if (!tourRequest) {
+        return next(new AppError('No request found with this id', 404));
+    }
+
+    // Check if the guide is in the list of available guides
+    const guide = await User.findOne({
+        _id: guideId,
+        languages: { $all: tourRequest.spokenLanguages },
+        cities: { $in: [tourRequest.city] },
+    });
+
+    // Check if the guide is in the list of sent requests
+    const index = tourRequest.sentRequests.indexOf(guideId);
+    if (index > -1) {
+        tourRequest.sentRequests.splice(index, 1);
+        await tourRequest.save();
+    } else {
+        return next(new AppError('Guide not found in sent requests', 404));
+    }
+
+    // TODO: A notification must be sent to the tour guide
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Request cancelled.',
     });
 });

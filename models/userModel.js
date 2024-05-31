@@ -90,6 +90,12 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    tourRequests: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'CustomizedTour',
+        },
+    ],
 });
 
 userSchema.pre('save', async function (next) {

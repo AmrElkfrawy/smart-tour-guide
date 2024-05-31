@@ -51,6 +51,18 @@ router.get(
     customizedTourController.findGuidesForTourRequest
 );
 
+router.patch(
+    '/tour/:tourId/guide/:guideId/send-request',
+    authController.restrictTo('user'),
+    customizedTourController.sendRequestToGuide
+);
+
+router.patch(
+    '/tour/:tourId/guide/:guideId/cancel-request',
+    authController.restrictTo('user'),
+    customizedTourController.cancelRequestToGuide
+);
+
 // Routes for CRUD operations on customized tours
 router
     .route('/')
