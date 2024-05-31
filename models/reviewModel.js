@@ -1,4 +1,5 @@
 const landmarkModel = require('./landmarkModel');
+const tourModel = require('./tourModel');
 
 const mongoose = require('mongoose');
 
@@ -39,7 +40,6 @@ const reviewSchema = new mongoose.Schema(
 
 reviewSchema.index({ user: 1, landmark: 1 });
 reviewSchema.index({ user: 1, tour: 1 });
-reviewSchema.index({ user: 1, guide: 1 });
 
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
@@ -48,39 +48,51 @@ reviewSchema.pre(/^find/, function (next) {
     });
     next();
 });
-reviewSchema.statics.calcAverageRatings = async function (landmarkId) {
+
+reviewSchema.statics.calcAverageRatings = async function (
+    entityId,
+    entityType
+) {
     const stats = await this.aggregate([
         {
-            $match: { landmark: landmarkId },
+            $match: { [entityType]: entityId },
         },
         {
             $group: {
-                _id: '$landmark',
+                _id: `$${entityType}`,
                 nRating: { $sum: 1 },
                 avgRating: { $avg: '$rating' },
             },
         },
     ]);
-    // console.log(stats);
-    if (stats.length > 0) {
-        await landmarkModel.findByIdAndUpdate(landmarkId, {
-            ratingsQuantity: stats[0].nRating,
-            rating: stats[0].avgRating,
-        });
-    } else {
-        await landmarkModel.findByIdAndUpdate(landmarkId, {
-            ratingsQuantity: 0,
-            rating: 4,
-        });
+
+    const updateData = {
+        ratingsQuantity: stats.length > 0 ? stats[0].nRating : 0,
+        rating: stats.length > 0 ? stats[0].avgRating : 4,
+    };
+
+    let model;
+    if (entityType === 'landmark') {
+        model = landmarkModel;
+    } else if (entityType === 'tour') {
+        model = tourModel;
     }
+
+    await model.findByIdAndUpdate(entityId, updateData);
 };
 
 reviewSchema.post('save', function () {
-    this.constructor.calcAverageRatings(this.landmark);
+    if (this.landmark)
+        this.constructor.calcAverageRatings(this.landmark, 'landmark');
+    if (this.tour) this.constructor.calcAverageRatings(this.tour, 'tour');
+    if (this.guide) this.constructor.calcAverageRatings(this.guide, 'guide');
 });
 
 reviewSchema.post(/^findOneAnd/, async (doc) => {
-    await doc.constructor.calcAverageRatings(doc.landmark);
+    if (doc.landmark)
+        await doc.constructor.calcAverageRatings(doc.landmark, 'landmark');
+    if (doc.tour) await doc.constructor.calcAverageRatings(doc.tour, 'tour');
+    if (doc.guide) await doc.constructor.calcAverageRatings(doc.guide, 'guide');
 });
 
 const Review = mongoose.model('Review', reviewSchema);
