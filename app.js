@@ -19,6 +19,8 @@ const reviewRouter = require('./routes/reviewRoutes');
 const detectionRouter = require('./routes/detectionRoutes');
 const customizedTourRouter = require('./routes/customizedTourRoutes');
 const tourRouter = require('./routes/tourRoutes');
+const cartRouter = require('./routes/cartRouter');
+const wishlistRouter = require('./routes/wishListRouter');
 
 const app = express();
 
@@ -74,6 +76,8 @@ app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/detections', detectionRouter);
 app.use('/api/v1/customizedTour', customizedTourRouter);
 app.use('/api/v1/tours', tourRouter);
+app.use('/api/v1/cart', cartRouter);
+app.use('/api/v1/wishlist', wishlistRouter);
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
