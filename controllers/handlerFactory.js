@@ -4,9 +4,12 @@ const APIFeatures = require('./../utils/apiFeatures');
 
 exports.getAll = (Model) =>
     catchAsync(async (req, res, next) => {
-        // To allow for nested GET reviews on Landmark (hack)
+        // To allow for nested GET reviews on Landmark/Tour/Guide (hack)
         let filter = {};
-        if (req.params.landmarkId) filter = { landmark: req.params.landmarkId };
+        if (req.params.landmarkId) filter = { subject: req.params.landmarkId };
+        else if (req.params.tourId) filter = { subject: req.params.tourId };
+        else if (req.params.guideId) filter = { subject: req.params.guideId };
+
         if (req.params.categoryId) filter = { category: req.params.categoryId };
 
         // EXECUTE QUERY
