@@ -49,14 +49,13 @@ const bookingSchema = new mongoose.Schema(
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'User',
                 },
-                status: {
-                    type: String,
-                    enum: ['booked', 'cancelled'],
-                    default: 'booked',
-                },
             },
         ],
-
+        status: {
+            type: String,
+            enum: ['confirmed', 'cancelled'],
+            default: 'confirmed',
+        },
         totalPrice: {
             type: Number,
             required: true,
