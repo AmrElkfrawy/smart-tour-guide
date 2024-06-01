@@ -73,6 +73,11 @@ const tourSchema = new mongoose.Schema(
             default: 0,
         },
         slug: String,
+        category: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'TourCategory',
+            required: [true, 'A tour must belong to a category'],
+        },
     },
     {
         timestamps: true,
