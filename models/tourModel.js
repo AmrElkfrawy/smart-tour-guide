@@ -68,6 +68,10 @@ const tourSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        bookings: {
+            type: Number,
+            default: 0,
+        },
         slug: String,
     },
     {
