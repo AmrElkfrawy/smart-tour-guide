@@ -204,6 +204,7 @@ exports.respondToTourGuide = catchAsync(async (req, res, next) => {
     if (response === 'accept') {
         tourRequest.acceptedGuide = guideId;
         tourRequest.status = 'confirmed';
+        tourRequest.sentRequests = undefined;
     } else if (response === 'reject') {
         tourRequest.respondingGuides = tourRequest.respondingGuides.filter(
             (id) => !id.equals(guideId)
@@ -313,13 +314,6 @@ exports.cancelRequestToGuide = catchAsync(async (req, res, next) => {
         return next(new AppError('No request found with this id', 404));
     }
 
-    // Check if the guide is in the list of available guides
-    const guide = await User.findOne({
-        _id: guideId,
-        languages: { $all: tourRequest.spokenLanguages },
-        cities: { $in: [tourRequest.city] },
-    });
-
     // Check if the guide is in the list of sent requests
     const index = tourRequest.sentRequests.indexOf(guideId);
     if (index > -1) {
@@ -327,6 +321,16 @@ exports.cancelRequestToGuide = catchAsync(async (req, res, next) => {
         await tourRequest.save();
     } else {
         return next(new AppError('Guide not found in sent requests', 404));
+    }
+
+    // Remove request from guide's tour requests
+    const guide = await User.findById(guideId);
+    if (guide) {
+        const guideIndex = guide.tourRequests.indexOf(tourId);
+        if (guideIndex > -1) {
+            guide.tourRequests.splice(guideIndex, 1);
+            await guide.save();
+        }
     }
 
     // TODO: A notification must be sent to the tour guide

@@ -94,10 +94,9 @@ reviewSchema.statics.calcAverageRatings = async function (
         Model = landmarkModel;
     } else if (reviewType === 'User') {
         Model = User;
+    } else if (reviewType === 'Tour') {
+        Model = Tour;
     }
-    // else if (reviewType === 'Tour') {
-    //     Model = Tour;
-    // }
     await Model.findByIdAndUpdate(subjectId, updateData);
 };
 

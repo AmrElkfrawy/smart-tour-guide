@@ -40,21 +40,10 @@ const checkBookedGuide = async (userId, subject) => {
     }
 };
 
-const checkVisitedLandmark = async (userId, subject) => {
-    const landmark = await Landmark.findOne({
-        landmark: subject,
-        user: userId,
-    });
-    if (!landmark) {
-        throw new AppError('You can NOT review a landmark twice.', 400);
-    }
-};
-
 // Strategy map
 const reviewCheckStrategies = {
     Tour: checkBookedTour,
     User: checkBookedGuide,
-    Landmark: checkVisitedLandmark,
 };
 
 // Combined middleware function
