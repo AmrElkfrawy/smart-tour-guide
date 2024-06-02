@@ -47,13 +47,25 @@ const customizedTourSchema = new mongoose.Schema(
         },
         respondingGuides: [
             {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
+                guide: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                },
+                price: {
+                    type: Number,
+                    required: [true, 'You must provide a price proposal.'],
+                },
             },
         ],
         acceptedGuide: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
+        },
+        price: Number, // Proposed price by the guide
+        paymentStatus: {
+            type: String,
+            enum: ['Pending', 'Paid'],
+            default: 'Pending',
         },
         sentRequests: [
             {
