@@ -5,6 +5,8 @@ const reviewRouter = require('./reviewRoutes');
 
 const router = express.Router();
 
+router.post('/check-availability/:id', tourController.checkAvailability);
+
 router
     .route('/')
     .get(tourController.getAllTours)

@@ -22,6 +22,11 @@ const reviewSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User', // Reference to the guide being reviewed
         },
+        reviewType: {
+            type: String,
+            enum: ['landmark', 'tour', 'guide'],
+            required: true,
+        },
         rating: {
             type: Number,
             required: true,
@@ -82,17 +87,21 @@ reviewSchema.statics.calcAverageRatings = async function (
 };
 
 reviewSchema.post('save', function () {
-    if (this.landmark)
+    if (this.type === 'landmark')
         this.constructor.calcAverageRatings(this.landmark, 'landmark');
-    if (this.tour) this.constructor.calcAverageRatings(this.tour, 'tour');
-    if (this.guide) this.constructor.calcAverageRatings(this.guide, 'guide');
+    else if (this.type === 'tour')
+        this.constructor.calcAverageRatings(this.tour, 'tour');
+    else if (this.type === 'guide')
+        this.constructor.calcAverageRatings(this.guide, 'guide');
 });
 
 reviewSchema.post(/^findOneAnd/, async (doc) => {
-    if (doc.landmark)
+    if (doc.type === 'landmark')
         await doc.constructor.calcAverageRatings(doc.landmark, 'landmark');
-    if (doc.tour) await doc.constructor.calcAverageRatings(doc.tour, 'tour');
-    if (doc.guide) await doc.constructor.calcAverageRatings(doc.guide, 'guide');
+    else if (doc.type === 'tour')
+        await doc.constructor.calcAverageRatings(doc.tour, 'tour');
+    else if (doc.type === 'guide')
+        await doc.constructor.calcAverageRatings(doc.guide, 'guide');
 });
 
 const Review = mongoose.model('Review', reviewSchema);

@@ -45,10 +45,12 @@ const bookingSchema = new mongoose.Schema(
                     enum: ['standard', 'customized'],
                     default: 'standard',
                 },
-                guide: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'User',
-                },
+                guides: [
+                    {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: 'User',
+                    },
+                ],
             },
         ],
         status: {
@@ -66,12 +68,12 @@ const bookingSchema = new mongoose.Schema(
 
 bookingSchema.pre('save', function (next) {
     if (
-        (this.tour && this.customizedTour) ||
-        (!this.tour && !this.customizedTour)
+        (this.tours !== undefined && this.customizedTours !== undefined) ||
+        (this.tours === undefined && this.customizedTours === undefined)
     ) {
         next(
             new Error(
-                'Either "tour" or "customizedTour" must be set, but not both.'
+                'Either "tours" or "customizedTours" must be set, but not both.'
             )
         );
     } else {
@@ -87,17 +89,10 @@ bookingSchema.pre(/^find/, function (next) {
         .populate({
             path: 'tours.tour',
             select: 'name images duration',
+            options: { excludeChain: true },
         })
         .populate({
-            path: 'tours.guide',
-            select: 'name email photo',
-        })
-        .populate({
-            path: 'customizedTours.customizedTour',
-            select: 'name',
-        })
-        .populate({
-            path: 'customizedTours.guide',
+            path: 'tours.guides',
             select: 'firstName lastName email',
         });
 

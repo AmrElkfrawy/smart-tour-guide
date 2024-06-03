@@ -19,7 +19,11 @@ exports.addToWishlist = catchAsync(async (req, res, next) => {
             $addToSet: { wishlist: req.body.tourId },
         },
         { new: true }
-    );
+    ).populate({
+        path: 'wishlist',
+        select: 'name images price',
+        options: { excludeChain: true },
+    });
     res.status(200).json({
         status: 'success',
         results: user.wishlist.length,
@@ -34,7 +38,11 @@ exports.removeFromWishlist = catchAsync(async (req, res, next) => {
             $pull: { wishlist: req.params.id },
         },
         { new: true }
-    );
+    ).populate({
+        path: 'wishlist',
+        select: 'name images price',
+        options: { excludeChain: true },
+    });
     if (!user) {
         return next(new AppError('No wishlist item found', 404));
     }
@@ -46,7 +54,11 @@ exports.removeFromWishlist = catchAsync(async (req, res, next) => {
 });
 
 exports.getWishlist = catchAsync(async (req, res, next) => {
-    const user = await User.findById(req.user._id).populate('wishlist');
+    const user = await User.findById(req.user._id).populate({
+        path: 'wishlist',
+        select: 'name images price',
+        options: { excludeChain: true },
+    });
     res.status(200).json({
         status: 'success',
         results: user.wishlist.length,

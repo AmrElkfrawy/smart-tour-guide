@@ -16,8 +16,13 @@ const cartSchema = new mongoose.Schema(
                     max: [10, 'Group size must be at most 10'],
                 },
                 itemPrice: Number,
+                tourDate: {
+                    type: Date,
+                    required: [true, 'Tour date is required'],
+                },
             },
         ],
+
         totalCartPrice: Number,
         user: {
             type: mongoose.Schema.ObjectId,
@@ -30,7 +35,8 @@ const cartSchema = new mongoose.Schema(
 cartSchema.pre(/^find/, function (next) {
     this.populate({
         path: 'cartItems.tour',
-        select: 'name price discount images',
+        select: 'name price images guides duration',
+        options: { excludeChain: true },
     });
     next();
 });
