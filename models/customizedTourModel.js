@@ -64,8 +64,8 @@ const customizedTourSchema = new mongoose.Schema(
         price: Number, // Proposed price by the guide
         paymentStatus: {
             type: String,
-            enum: ['Pending', 'Paid'],
-            default: 'Pending',
+            enum: ['pending', 'paid'],
+            default: 'pending',
         },
         sentRequests: [
             {
@@ -86,8 +86,9 @@ customizedTourSchema.pre(/^find/, function () {
             path: 'landmarks',
             select: 'name imageCover',
         })
-        .populate({ path: 'respondingGuides', select: 'name photo' })
+        .populate({ path: 'respondingGuides.guide', select: 'name photo' })
         .populate({ path: 'acceptedGuide', select: 'name photo' });
+    // .populate({ path: 'sentRequests', select: 'name photo' });
 });
 
 const CustomizedTour = mongoose.model('CustomizedTour', customizedTourSchema);

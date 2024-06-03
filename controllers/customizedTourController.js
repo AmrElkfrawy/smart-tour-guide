@@ -6,6 +6,68 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const factory = require('./handlerFactory');
 
+// Helper Functions
+
+const findTourRequest = async (tourId, userId, status = null) => {
+    const query = { _id: tourId, user: userId };
+    if (status) {
+        query.status = status;
+    }
+    return await CustomizedTour.findOne(query);
+};
+
+const findGuideResponse = (tourRequest, guideId) => {
+    return tourRequest.respondingGuides.find((response) =>
+        response.guide.equals(guideId)
+    );
+};
+
+const updateTourRequestForAcceptance = catchAsync(
+    async (tourRequest, guideId, guideResponse) => {
+        tourRequest.acceptedGuide = guideId;
+        tourRequest.price = guideResponse.price;
+        tourRequest.status = 'confirmed';
+        tourRequest.respondingGuides = undefined;
+        // tourRequest.sentRequests = undefined;
+
+        // Remove requests sent to other guides
+        const otherGuides = await User.find({
+            _id: {
+                $in: tourRequest.sentRequests.filter(
+                    (Id) => !Id.equals(guideId)
+                ),
+            },
+        });
+
+        for (const guide of otherGuides) {
+            await removeRequestFromGuideRequests(guide, tourRequest._id);
+        }
+    }
+);
+
+const removeRequestFromGuideRequests = catchAsync(async (guide, tourId) => {
+    guide.tourRequests = guide.tourRequests.filter(
+        (requestId) => !requestId.equals(tourId)
+    );
+    await guide.save({ validateBeforeSave: false });
+});
+
+const handleRejectResponse = catchAsync(
+    async (tourRequest, guideId, tourId) => {
+        tourRequest.respondingGuides = tourRequest.respondingGuides.filter(
+            (response) => !response.guide.equals(guideId)
+        );
+
+        // Remove the tour request from the guide's tour requests
+        const guide = await User.findById(guideId);
+        if (guide.tourRequests.find((Id) => Id.equals(tourId))) {
+            await removeRequestFromGuideRequests(guide, tourId);
+        }
+    }
+);
+
+// Controller Functions
+
 exports.setUserIdToBody = (req, res, next) => {
     req.body.user = req.user.id;
     next();
@@ -38,10 +100,8 @@ exports.getMyTourRequests = catchAsync(async (req, res, next) => {
 });
 
 exports.getMyTourRequestById = catchAsync(async (req, res, next) => {
-    const request = await CustomizedTour.findOne({
-        user: req.user.id,
-        _id: req.params.id,
-    });
+    const request = await findTourRequest(req.params.id, req.user.id);
+
     if (!request) {
         return next(new AppError('No request found with this id', 400));
     }
@@ -54,23 +114,20 @@ exports.getMyTourRequestById = catchAsync(async (req, res, next) => {
 });
 
 exports.cancelCustomizedTour = catchAsync(async (req, res, next) => {
-    const customizedTour = await CustomizedTour.findOne({
-        _id: req.params.id,
-        user: req.user.id,
-    });
+    const customizedTour = await findTourRequest(req.params.id, req.user.id);
 
     if (!customizedTour) {
         return next(new AppError('Customized Tour not found', 404));
     }
 
-    if (customizedTour.status === 'Cancelled') {
+    if (customizedTour.status === 'cancelled') {
         return next(new AppError('Tour is already cancelled', 400));
     }
 
     // Check if the tour can be cancelled based on its status and creation time
     const canCancelTour =
-        customizedTour.status === 'Pending' ||
-        (customizedTour.status === 'Confirmed' &&
+        customizedTour.status === 'pending' ||
+        (customizedTour.status === 'confirmed' &&
             customizedTour.createdAt.getTime() >
                 Date.now() - 24 * 60 * 60 * 1000);
 
@@ -78,7 +135,7 @@ exports.cancelCustomizedTour = catchAsync(async (req, res, next) => {
         return next(new AppError('Cannot cancel the tour at this time', 400));
     }
 
-    customizedTour.status = 'Cancelled';
+    customizedTour.status = 'cancelled';
     await customizedTour.save();
 
     res.status(200).json({
@@ -125,9 +182,7 @@ exports.respondToTourRequest = catchAsync(async (req, res, next) => {
     const { price } = req.body;
 
     // Check if guide has already responded
-    const guideResponse = tourRequest.respondingGuides.find((response) =>
-        response.guide.equals(req.user.id)
-    );
+    const guideResponse = findGuideResponse(tourRequest, req.user.id);
 
     if (guideResponse) {
         return next(
@@ -151,11 +206,7 @@ exports.respondToTourGuide = catchAsync(async (req, res, next) => {
     const { tourId, guideId } = req.params;
     const { response } = req.body;
 
-    const tourRequest = await CustomizedTour.findOne({
-        _id: tourId,
-        user: req.user.id,
-        status: 'pending',
-    });
+    const tourRequest = await findTourRequest(tourId, req.user.id, 'pending');
 
     if (!tourRequest) {
         return next(new AppError('Tour request not found.', 404));
@@ -167,9 +218,7 @@ exports.respondToTourGuide = catchAsync(async (req, res, next) => {
         );
     }
 
-    const guideResponse = tourRequest.respondingGuides.find((response) =>
-        response.guide.equals(guideId)
-    );
+    const guideResponse = findGuideResponse(tourRequest, guideId);
 
     if (!guideResponse) {
         return next(
@@ -185,24 +234,13 @@ exports.respondToTourGuide = catchAsync(async (req, res, next) => {
     }
 
     if (response === 'accept') {
-        tourRequest.acceptedGuide = guideId;
-        tourRequest.price = guideResponse.price;
-        tourRequest.status = 'confirmed';
-        tourRequest.respondingGuides = undefined;
-        tourRequest.sentRequests = undefined;
-    } else if (response === 'reject') {
-        tourRequest.respondingGuides = tourRequest.respondingGuides.filter(
-            (response) => !response.guide.equals(guideId)
+        await updateTourRequestForAcceptance(
+            tourRequest,
+            guideId,
+            guideResponse
         );
-
-        // Remove the tour request from the guide's tour requests
-        const guide = await User.findById(guideId);
-        if (guide.tourRequests.find((Id) => Id.equals(tourId))) {
-            guide.tourRequests = guide.tourRequests.filter(
-                (requestId) => !requestId.equals(tourId)
-            );
-            await guide.save({ validateBeforeSave: false });
-        }
+    } else if (response === 'reject') {
+        await handleRejectResponse(tourRequest, guideId, tourId);
     }
 
     await tourRequest.save();
@@ -216,11 +254,11 @@ exports.respondToTourGuide = catchAsync(async (req, res, next) => {
 });
 
 exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
-    const request = await CustomizedTour.findOne({
-        _id: req.params.tourId,
-        user: req.user.id,
-        status: 'pending',
-    });
+    const request = await findTourRequest(
+        req.params.tourId,
+        req.user.id,
+        'pending'
+    );
 
     if (!request) {
         return next(new AppError('No request found with this id', 404));
@@ -250,18 +288,18 @@ exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
 exports.sendRequestToGuide = catchAsync(async (req, res, next) => {
     const { tourId, guideId } = req.params;
 
-    const tourRequest = await CustomizedTour.findOne({
-        _id: tourId,
-        user: req.user.id,
-        status: 'pending',
-    });
+    const tourRequest = await findTourRequest(
+        req.params.tourId,
+        req.user.id,
+        'pending'
+    );
 
     if (!tourRequest) {
         return next(new AppError('No request found with this id', 404));
     }
 
     // Check if guide already received a request for this tour
-    if (tourRequest.sentRequests.includes(guideId)) {
+    if (tourRequest.sentRequests.find((Id) => Id.equals(guideId))) {
         return next(new AppError('Guide has already been sent a request', 400));
     }
 
@@ -282,6 +320,7 @@ exports.sendRequestToGuide = catchAsync(async (req, res, next) => {
     }
 
     tourRequest.sentRequests.push(guideId);
+
     await tourRequest.save();
 
     if (!guide.tourRequests.includes(tourId)) {
@@ -301,11 +340,11 @@ exports.sendRequestToGuide = catchAsync(async (req, res, next) => {
 exports.cancelRequestToGuide = catchAsync(async (req, res, next) => {
     const { tourId, guideId } = req.params;
 
-    const tourRequest = await CustomizedTour.findOne({
-        _id: tourId,
-        user: req.user.id,
-        status: 'pending',
-    });
+    const tourRequest = await findTourRequest(
+        req.params.tourId,
+        req.user.id,
+        'pending'
+    );
 
     if (!tourRequest) {
         return next(new AppError('No request found with this id', 404));
@@ -323,12 +362,7 @@ exports.cancelRequestToGuide = catchAsync(async (req, res, next) => {
 
     // Remove request from guide's tour requests
     const guide = await User.findById(guideId);
-    if (guide) {
-        guide.tourRequests = guide.tourRequests.filter(
-            (requestId) => !requestId.equals(tourId)
-        );
-        await guide.save({ validateBeforeSave: false });
-    }
+    removeRequestFromGuideRequests(guide, tourId);
 
     // TODO: A notification must be sent to the tour guide
 
