@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const { promisify } = require('util');
 // models
 const User = require('./../models/userModel');
+const NormalUser = require('./../models/normalUserModel');
+const Guide = require('./../models/guideModel');
 // utils
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
@@ -30,12 +32,24 @@ const createSendToken = (user, statusCode, req, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-    const newUser = await User.create({
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
-        passwordConfirm: req.body.passwordConfirm,
-    });
+    let newUser;
+    if (req.body.role === 'guide') {
+        newUser = await Guide.create({
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            passwordConfirm: req.body.passwordConfirm,
+            role: 'guide',
+        });
+    } else {
+        newUser = await NormalUser.create({
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            passwordConfirm: req.body.passwordConfirm,
+        });
+    }
+
     createSendToken(newUser, 201, req, res, next);
 
     /*
