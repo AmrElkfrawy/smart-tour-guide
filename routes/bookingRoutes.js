@@ -1,16 +1,27 @@
 const express = require('express');
 const bookingController = require('../controllers/bookingController');
+const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
 
 const router = express.Router();
 
-router.post(
-    '/checkout-session/:cartId',
-    authController.protect,
-    bookingController.createBookingCheckout
+router.get(
+    '/create',
+    bookingController.createBooking,
+    tourController.getAllTours
 );
 
-router.get('/create', bookingController.createBooking);
+router.post(
+    '/cart-checkout-session/:cartId',
+    authController.protect,
+    bookingController.createCartBookingCheckout
+);
+
+router.post(
+    '/tour-checkout-session/:tourId',
+    authController.protect,
+    bookingController.createTourBookingCheckout
+);
 
 router.use(authController.protect);
 router.route('/:id').get(bookingController.getBooking);

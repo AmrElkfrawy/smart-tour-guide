@@ -15,6 +15,7 @@ const calcTotalCartPrice = (cart) => {
 
 exports.addTourToCart = catchAsync(async (req, res, next) => {
     const groupSize = req.body.groupSize || 1;
+    const tourDate = req.body.tourDate;
     const tour = await Tour.findById(req.body.tourId);
     if (!tour) {
         return next(
@@ -24,6 +25,8 @@ exports.addTourToCart = catchAsync(async (req, res, next) => {
             )
         );
     }
+    if (isNaN(Date.parse(tourDate)))
+        return next(new AppError('Please enter a valid date', 400));
 
     let cart = await Cart.findOne({ user: req.user._id });
 
@@ -35,17 +38,22 @@ exports.addTourToCart = catchAsync(async (req, res, next) => {
                     tour: req.body.tourId,
                     groupSize,
                     itemPrice: tour.price * groupSize,
+                    tourDate,
                 },
             ],
         });
     } else {
-        if (cart.cartItems.includes(req.body.tourId)) {
+        const tourIndex = cart.cartItems.findIndex(
+            (item) => item.tour._id.toString() === req.body.tourId
+        );
+        if (tourIndex > -1) {
             return next(new AppError(`Tour already exist in cart`, 400));
         } else {
             cart.cartItems.push({
                 tour: req.body.tourId,
                 groupSize,
                 itemPrice: tour.price * groupSize,
+                tourDate,
             });
         }
     }
@@ -121,7 +129,7 @@ exports.updateCartItemGroupSize = catchAsync(async (req, res, next) => {
         cartItem.groupSize = groupSize;
         cart.cartItems[itemIndex] = cartItem;
         cart.cartItems[itemIndex].itemPrice =
-            cart.cartItems[itemIndex].product.price * groupSize;
+            cart.cartItems[itemIndex].tour.price * groupSize;
     } else {
         return next(new AppError(`There is no cart item with this id`, 404));
     }

@@ -78,8 +78,8 @@ app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/detections', detectionRouter);
 app.use('/api/v1/customizedTour', customizedTourRouter);
 app.use('/api/v1/tours', tourRouter);
-app.use('/api/v1/cart', cartRouter);
-app.use('/api/v1/wishlist', wishlistRouter);
+app.use('/api/v1/carts', cartRouter);
+app.use('/api/v1/wishlists', wishlistRouter);
 app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/tourCategories', tourCategoryRouter);
 

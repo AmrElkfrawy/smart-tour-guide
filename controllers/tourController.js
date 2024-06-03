@@ -116,3 +116,26 @@ exports.deleteTourImages = catchAsync(async (req, res, next) => {
         },
     });
 });
+
+exports.checkAvailability = catchAsync(async (req, res, next) => {
+    const tour = await Tour.findById(req.params.id);
+    if (!tour) {
+        return next(new AppError('No tour found with this ID', 404));
+    }
+    let { tourDate, groupSize } = req.body;
+    if (!tourDate || !groupSize) {
+        return next(
+            new AppError('Please provide tourDate and groupSize to check', 400)
+        );
+    }
+
+    if (isNaN(Date.parse(tourDate))) {
+        return next(new AppError('Please provide a valid date', 400));
+    }
+
+    const available = tour.checkAvailability(tourDate, groupSize);
+    res.status(200).json({
+        status: 'success',
+        available,
+    });
+});

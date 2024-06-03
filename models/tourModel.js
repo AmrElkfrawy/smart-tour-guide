@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+const slugify = require('slugify');
+const Booking = require('./bookingModel');
+
 const tourSchema = new mongoose.Schema(
     {
         name: {
@@ -89,11 +92,34 @@ const tourSchema = new mongoose.Schema(
 tourSchema.index({ location: '2dsphere' });
 
 tourSchema.pre(/^find/, function () {
-    this.populate({
-        path: 'guides',
-        select: 'name photo role email',
-    });
+    const excludeChain = !this.options.excludeChain;
+    if (excludeChain) {
+        this.populate({
+            path: 'guides',
+            select: 'name photo email',
+        }).populate({
+            path: 'category',
+            select: 'name',
+        });
+    }
 });
+
+tourSchema.methods.checkAvailability = function (tourDate, groupSize) {
+    if (!tourDate || !groupSize) return false;
+    if (this.startDays.length === 0) return false;
+
+    tourDate = new Date(tourDate);
+    const tourDay = tourDate.toLocaleString('en-US', { weekday: 'long' });
+    if (!this.startDays.includes(tourDay)) return false;
+
+    const numberBookings = Booking.countDocuments({
+        tour: this._id,
+        tourDate,
+    });
+
+    if (this.maxGroupSize - numberBookings < groupSize) return false;
+    return true;
+};
 
 const Tour = mongoose.model('Tour', tourSchema);
 
