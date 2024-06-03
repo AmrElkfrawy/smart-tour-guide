@@ -14,10 +14,8 @@ class APIFeatures {
             'fields',
             'search',
             'location',
-            'category',
         ];
         excludedFields.forEach((el) => delete queryObj[el]);
-
         // Advanced Filtering
         let queryStr = JSON.stringify(queryObj);
         queryStr = queryStr.replace(
