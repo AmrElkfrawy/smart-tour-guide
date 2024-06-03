@@ -316,6 +316,15 @@ exports.sendRequestToGuide = catchAsync(async (req, res, next) => {
         return next(new AppError('Guide has already been sent a request', 400));
     }
 
+    if (findGuideResponse(tourRequest, guideId)) {
+        return next(
+            new AppError(
+                'Guide has already responded to the request with price proposal.',
+                400
+            )
+        );
+    }
+
     // Check if the guide is in the list of available guides
     const guide = await User.findOne({
         _id: guideId,
