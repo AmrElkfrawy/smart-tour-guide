@@ -170,9 +170,22 @@ exports.respondToTourRequest = catchAsync(async (req, res, next) => {
         _id: req.params.tourId,
         status: 'pending',
     });
+    const guide = req.user;
 
     if (!tourRequest) {
         return next(new AppError('Tour request not found. ', 404));
+    }
+
+    // Check if the guide's languages and cities match the tour request
+    const languagesMatch = tourRequest.spokenLanguages.every((lang) =>
+        guide.languages.includes(lang)
+    );
+    const cityMatch = guide.cities.includes(tourRequest.city);
+
+    if (!languagesMatch || !cityMatch) {
+        return next(
+            new AppError('You do NOT match this tour request preferences.', 400)
+        );
     }
 
     if (tourRequest.acceptedGuide) {
