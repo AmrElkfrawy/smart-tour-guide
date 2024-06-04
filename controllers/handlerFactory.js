@@ -8,6 +8,8 @@ exports.getAll = (Model) =>
         let filter = {};
         if (req.params.landmarkId) filter = { landmark: req.params.landmarkId };
         if (req.params.categoryId) filter = { category: req.params.categoryId };
+        if (req.params.tourCategoryId)
+            filter = { category: req.params.tourCategoryId };
 
         // EXECUTE QUERY
         const features = new APIFeatures(Model.find(filter), req.query)

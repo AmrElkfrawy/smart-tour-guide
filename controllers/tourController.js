@@ -39,6 +39,13 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
     next();
 });
 
+exports.setCategoryIdToParams = (req, res, next) => {
+    if (!req.params && !req.params.tourCategoryId)
+        req.params.tourCategoryId = req.body.category;
+
+    next();
+};
+
 exports.getAllTours = factory.getAll(Tour);
 exports.getTour = factory.getOne(Tour, { path: 'guides' });
 exports.createTour = factory.createOne(Tour);

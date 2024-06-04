@@ -3,13 +3,13 @@ const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
 const reviewRouter = require('./reviewRoutes');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.post('/check-availability/:id', tourController.checkAvailability);
 
 router
     .route('/')
-    .get(tourController.getAllTours)
+    .get(tourController.setCategoryIdToParams, tourController.getAllTours)
     .post(
         authController.protect,
         authController.restrictTo('admin'),
