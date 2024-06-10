@@ -47,6 +47,6 @@ router
         tourController.deleteTourImages
     );
 
-router.use('/:tourId/reviews', reviewRouter);
+router.use('/:subjectId/reviews', reviewRouter);
 
 module.exports = router;

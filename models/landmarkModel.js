@@ -65,7 +65,7 @@ landmarkSchema.index({ location: '2dsphere' });
 
 landmarkSchema.virtual('reviews', {
     ref: 'Review',
-    foreignField: 'landmark',
+    foreignField: 'subject',
     localField: '_id',
 });
 

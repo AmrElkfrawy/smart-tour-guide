@@ -16,9 +16,9 @@ exports.checkIfAuth = catchAsync(async (req, res, next) => {
     }
     next();
 });
-exports.setLandmarkUserIDs = (req, res, next) => {
+exports.setSubjectUserIds = (req, res, next) => {
     // Allow nested routes
-    if (!req.body.landmark) req.body.landmark = req.params.landmarkId;
+    if (!req.body.subject) req.body.subject = req.params.subjectId;
     if (!req.body.user) req.body.user = req.user.id;
     next();
 };

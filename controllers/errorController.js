@@ -30,7 +30,7 @@ const handleDuplicateFieldsDB = (err) => {
             message += `This ${duplicatedFields} already exists.`;
         }
         if (duplicatedFields.length > 1) {
-            message += 'You already have a posted a review.';
+            message += 'You already have a posted a review for this entity.';
         }
 
         // const message = `Duplicate field value: ${value}. Please use another value.`;

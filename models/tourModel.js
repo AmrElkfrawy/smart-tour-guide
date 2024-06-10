@@ -91,6 +91,12 @@ const tourSchema = new mongoose.Schema(
 
 tourSchema.index({ location: '2dsphere' });
 
+tourSchema.virtual('reviews', {
+    ref: 'Review',
+    foreignField: 'subject',
+    localField: '_id',
+});
+
 tourSchema.pre(/^find/, function () {
     const excludeChain = !this.options.excludeChain;
     if (excludeChain) {

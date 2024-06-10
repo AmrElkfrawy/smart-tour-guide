@@ -1,50 +1,42 @@
 const landmarkModel = require('./landmarkModel');
 const tourModel = require('./tourModel');
+const guideModel = require('./guideModel');
 
 const mongoose = require('mongoose');
 
-const reviewSchema = new mongoose.Schema(
-    {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User', // Reference to the user who left the review
-            required: [true, 'Review must have user'],
-        },
-        landmark: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Landmark', // Reference to the landmark being reviewed
-        },
-        tour: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Tour', // Reference to the tour being reviewed
-        },
-        guide: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User', // Reference to the guide being reviewed
-        },
-        reviewType: {
-            type: String,
-            enum: ['landmark', 'tour', 'guide'],
-            required: true,
-        },
-        rating: {
-            type: Number,
-            required: true,
-            min: [1, 'Rating must be at least 1'],
-            max: [5, 'Rating must be at most 5'],
-        },
-        comment: {
-            type: String,
-            required: true,
-        },
+const reviewSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: [true, 'Review must have a user'],
     },
-    {
-        timestamps: true,
-    }
-);
+    reviewType: {
+        type: String,
+        enum: ['Landmark', 'User', 'Tour'],
+        required: [true, 'Review must have a type'],
+    },
+    subject: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: [true, 'Review must have a subject'],
+        refPath: 'reviewType',
+    },
+    rating: {
+        type: Number,
+        required: true,
+        min: [1, 'Rating must be at least 1'],
+        max: [5, 'Rating must be at most 5'],
+    },
+    comment: {
+        type: String,
+        required: true,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
 
-reviewSchema.index({ user: 1, landmark: 1 });
-reviewSchema.index({ user: 1, tour: 1 });
+reviewSchema.index({ user: 1, subject: 1 }, { unique: true });
 
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
@@ -55,16 +47,16 @@ reviewSchema.pre(/^find/, function (next) {
 });
 
 reviewSchema.statics.calcAverageRatings = async function (
-    entityId,
-    entityType
+    subjectId,
+    reviewType
 ) {
     const stats = await this.aggregate([
         {
-            $match: { [entityType]: entityId },
+            $match: { subject: subjectId },
         },
         {
             $group: {
-                _id: `$${entityType}`,
+                _id: '$subject',
                 nRating: { $sum: 1 },
                 avgRating: { $avg: '$rating' },
             },
@@ -77,31 +69,25 @@ reviewSchema.statics.calcAverageRatings = async function (
     };
 
     let model;
-    if (entityType === 'landmark') {
+    if (reviewType === 'Landmark') {
         model = landmarkModel;
-    } else if (entityType === 'tour') {
+    } else if (reviewType === 'Tour') {
         model = tourModel;
+    } else if (reviewType === 'Guide') {
+        model = guideModel;
     }
 
-    await model.findByIdAndUpdate(entityId, updateData);
+    await model.findByIdAndUpdate(subjectId, updateData);
 };
 
 reviewSchema.post('save', function () {
-    if (this.type === 'landmark')
-        this.constructor.calcAverageRatings(this.landmark, 'landmark');
-    else if (this.type === 'tour')
-        this.constructor.calcAverageRatings(this.tour, 'tour');
-    else if (this.type === 'guide')
-        this.constructor.calcAverageRatings(this.guide, 'guide');
+    this.constructor.calcAverageRatings(this.subject, this.reviewType);
 });
 
 reviewSchema.post(/^findOneAnd/, async (doc) => {
-    if (doc.type === 'landmark')
-        await doc.constructor.calcAverageRatings(doc.landmark, 'landmark');
-    else if (doc.type === 'tour')
-        await doc.constructor.calcAverageRatings(doc.tour, 'tour');
-    else if (doc.type === 'guide')
-        await doc.constructor.calcAverageRatings(doc.guide, 'guide');
+    if (doc) {
+        await doc.constructor.calcAverageRatings(doc.subject, doc.reviewType);
+    }
 });
 
 const Review = mongoose.model('Review', reviewSchema);

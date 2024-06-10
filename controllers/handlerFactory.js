@@ -6,7 +6,8 @@ exports.getAll = (Model) =>
     catchAsync(async (req, res, next) => {
         // To allow for nested GET reviews on Landmark (hack)
         let filter = {};
-        if (req.params.landmarkId) filter = { landmark: req.params.landmarkId };
+        if (req.params.subjectId) filter = { subject: req.params.subjectId };
+        // To allow for nested GET in categories
         if (req.params.categoryId) filter = { category: req.params.categoryId };
         if (req.params.tourCategoryId)
             filter = { category: req.params.tourCategoryId };

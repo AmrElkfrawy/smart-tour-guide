@@ -50,6 +50,6 @@ router
         landmarkController.deleteLandmarkImages
     );
 
-router.use('/:landmarkId/reviews', reviewRouter);
+router.use('/:subjectId/reviews', reviewRouter);
 
 module.exports = router;

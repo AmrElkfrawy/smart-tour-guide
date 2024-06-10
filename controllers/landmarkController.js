@@ -60,7 +60,7 @@ exports.setCategoryIdToBody = (req, res, next) => {
 };
 
 exports.getAllLandmarks = factory.getAll(Landmark);
-exports.getLandmark = factory.getOne(Landmark);
+exports.getLandmark = factory.getOne(Landmark, { path: 'reviews' });
 exports.createLandmark = factory.createOne(Landmark);
 exports.deleteLandmark = factory.deleteOne(Landmark);
 exports.updateLandmark = factory.updateOne(Landmark);

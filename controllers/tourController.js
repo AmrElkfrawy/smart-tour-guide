@@ -47,7 +47,7 @@ exports.setCategoryIdToParams = (req, res, next) => {
 };
 
 exports.getAllTours = factory.getAll(Tour);
-exports.getTour = factory.getOne(Tour, { path: 'guides' });
+exports.getTour = factory.getOne(Tour, { path: 'guides reviews' });
 exports.createTour = factory.createOne(Tour);
 exports.updateTour = factory.updateOne(Tour);
 exports.deleteTour = factory.deleteOne(Tour);
