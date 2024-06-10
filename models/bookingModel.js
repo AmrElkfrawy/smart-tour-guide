@@ -45,12 +45,10 @@ const bookingSchema = new mongoose.Schema(
                     enum: ['standard', 'customized'],
                     default: 'standard',
                 },
-                guides: [
-                    {
-                        type: mongoose.Schema.Types.ObjectId,
-                        ref: 'User',
-                    },
-                ],
+                guide: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                },
             },
         ],
         status: {
@@ -92,8 +90,8 @@ bookingSchema.pre(/^find/, function (next) {
             options: { excludeChain: true },
         })
         .populate({
-            path: 'tours.guides',
-            select: 'firstName lastName email',
+            path: 'tours.guide',
+            select: 'name email photo',
         });
 
     next();

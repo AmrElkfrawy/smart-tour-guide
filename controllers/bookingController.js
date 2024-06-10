@@ -26,7 +26,8 @@ exports.updateBooking = factory.updateOne(Booking);
 exports.getBooking = catchAsync(async (req, res, next) => {
     let filter = {};
     if (req.user.role === 'user') filter = { user: req.user._id };
-    if (req.user.role === 'guide') filter = { guide: req.user._id };
+    if (req.user.role === 'guide')
+        filter = { tours: { $elemMatch: { guide: req.user._id } } };
     const booking = await Booking.findOne({ _id: req.params.id, ...filter });
     if (req.user.role === 'user' && !booking)
         return next(new AppError("You don't have a booking with this id", 404));
@@ -178,7 +179,7 @@ exports.createBooking = catchAsync(async (req, res, next) => {
             return next(new AppError('No tour found with that ID', 404));
         }
 
-        const guideIds = tour.guides.map((guide) => guide._id.toString());
+        const guideId = tour.guide._id;
 
         await Booking.create({
             user: userId,
@@ -193,10 +194,9 @@ exports.createBooking = catchAsync(async (req, res, next) => {
                     price: price * groupSize,
                     tourDate,
                     tourType: 'standard',
-                    guides: guideIds, // Assign the guideIds array to the guides property
+                    guide: guideId,
                 },
             ],
-            tourType: 'standard',
         });
 
         tour.bookings += groupSize;
@@ -219,8 +219,8 @@ exports.createBooking = catchAsync(async (req, res, next) => {
                 groupSize: item.groupSize,
                 price: item.itemPrice,
                 tourDate: item.tourDate,
-                tourType: item.tourType,
-                guides: item.tour.guides,
+                tourType: 'standard',
+                guide: item.tour.guide,
             };
         });
         await Booking.create({
@@ -230,7 +230,6 @@ exports.createBooking = catchAsync(async (req, res, next) => {
             lastName,
             phone,
             tours,
-            tourType: 'standard',
         });
 
         const updatePromises = await Promise.all(

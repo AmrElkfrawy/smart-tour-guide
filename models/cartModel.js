@@ -35,7 +35,7 @@ const cartSchema = new mongoose.Schema(
 cartSchema.pre(/^find/, function (next) {
     this.populate({
         path: 'cartItems.tour',
-        select: 'name price images guides duration',
+        select: 'name price images guide duration',
         options: { excludeChain: true },
     });
     next();

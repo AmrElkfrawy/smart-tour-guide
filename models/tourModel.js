@@ -55,12 +55,11 @@ const tourSchema = new mongoose.Schema(
                 required: [true, 'A tour must have a start day'],
             },
         ],
-        guides: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
-            },
-        ],
+        guide: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: [true, 'A tour must have a guide'],
+        },
         rating: {
             type: Number,
             default: 4,
@@ -101,7 +100,7 @@ tourSchema.pre(/^find/, function () {
     const excludeChain = !this.options.excludeChain;
     if (excludeChain) {
         this.populate({
-            path: 'guides',
+            path: 'guide',
             select: 'name photo email',
         }).populate({
             path: 'category',
