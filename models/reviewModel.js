@@ -3,6 +3,7 @@ const tourModel = require('./tourModel');
 const guideModel = require('./guideModel');
 
 const mongoose = require('mongoose');
+const User = require('./userModel');
 
 const reviewSchema = new mongoose.Schema({
     user: {
@@ -36,7 +37,22 @@ const reviewSchema = new mongoose.Schema({
     },
 });
 
-reviewSchema.index({ user: 1, subject: 1 }, { unique: true });
+// Ensure unique review per user, subject, and reviewType
+reviewSchema.index({ subject: 1, user: 1, reviewType: 1 }, { unique: true });
+
+reviewSchema.pre('save', async function (next) {
+    if (this.reviewType === 'User') {
+        const guide = await User.findById(this.subject);
+        if (!guide || guide.role !== 'guide') {
+            return next(
+                new Error(
+                    'Reviews can only be left for users with the guide role'
+                )
+            );
+        }
+    }
+    next();
+});
 
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
@@ -52,7 +68,7 @@ reviewSchema.statics.calcAverageRatings = async function (
 ) {
     const stats = await this.aggregate([
         {
-            $match: { subject: subjectId },
+            $match: { subject: subjectId, reviewType: reviewType },
         },
         {
             $group: {
@@ -63,21 +79,27 @@ reviewSchema.statics.calcAverageRatings = async function (
         },
     ]);
 
-    const updateData = {
-        ratingsQuantity: stats.length > 0 ? stats[0].nRating : 0,
-        rating: stats.length > 0 ? stats[0].avgRating : 4,
-    };
+    const updateData =
+        stats.length > 0
+            ? {
+                  ratingsQuantity: stats[0].nRating,
+                  rating: stats[0].avgRating,
+              }
+            : {
+                  ratingsQuantity: 0,
+                  rating: 4,
+              };
 
-    let model;
+    let Model;
+
     if (reviewType === 'Landmark') {
-        model = landmarkModel;
+        Model = landmarkModel;
+    } else if (reviewType === 'User') {
+        Model = guideModel;
     } else if (reviewType === 'Tour') {
-        model = tourModel;
-    } else if (reviewType === 'Guide') {
-        model = guideModel;
+        Model = tourModel;
     }
-
-    await model.findByIdAndUpdate(subjectId, updateData);
+    await Model.findByIdAndUpdate(subjectId, updateData);
 };
 
 reviewSchema.post('save', function () {
@@ -85,9 +107,7 @@ reviewSchema.post('save', function () {
 });
 
 reviewSchema.post(/^findOneAnd/, async (doc) => {
-    if (doc) {
-        await doc.constructor.calcAverageRatings(doc.subject, doc.reviewType);
-    }
+    await doc.constructor.calcAverageRatings(doc.subject, doc.reviewType);
 });
 
 const Review = mongoose.model('Review', reviewSchema);

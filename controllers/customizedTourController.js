@@ -22,7 +22,7 @@ exports.getMyTourRequests = catchAsync(async (req, res, next) => {
     ).filter();
 
     const requests = await features.query;
-    console.log(requests);
+
     if (!requests) {
         return next(new AppError('No requests found', 404));
     }

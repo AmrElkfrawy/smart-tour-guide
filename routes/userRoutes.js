@@ -2,6 +2,7 @@ const express = require('express');
 
 const authController = require('./../controllers/authController');
 const userController = require('./../controllers/userController');
+const reviewRouter = require('./reviewRoutes');
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 
 // protected routes
 router.use(authController.protect);
+
 router.post('/resendVerificationEmail', authController.resendVerificationEmail);
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
@@ -33,5 +35,7 @@ router
     .route('/:id')
     .patch(userController.updateUser)
     .delete(userController.deleteUser);
+
+router.use('/:guideId/reviews', reviewRouter);
 
 module.exports = router;

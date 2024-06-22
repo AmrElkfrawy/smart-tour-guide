@@ -12,7 +12,12 @@ router
     .get(reviewController.getAllReviews)
     .post(
         authController.restrictTo('user'),
+<<<<<<< HEAD
         reviewController.setSubjectUserIds,
+=======
+        reviewController.setSubjectAndUserIDs,
+        reviewController.checkReviewPermission,
+>>>>>>> feature/rent-tour-guide
         reviewController.createReview
     );
 

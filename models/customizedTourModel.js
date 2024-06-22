@@ -8,11 +8,11 @@ const customizedTourSchema = new mongoose.Schema(
             ref: 'User',
             required: true,
         },
-        governorate: {
+        city: {
             type: String,
             required: true,
         },
-        languagesSpoken: [
+        spokenLanguages: [
             {
                 type: String,
                 required: true,
@@ -47,14 +47,32 @@ const customizedTourSchema = new mongoose.Schema(
         },
         respondingGuides: [
             {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
+                guide: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                },
+                price: {
+                    type: Number,
+                    required: [true, 'You must provide a price proposal.'],
+                },
             },
         ],
         acceptedGuide: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
         },
+        price: Number, // Proposed price by the guide
+        paymentStatus: {
+            type: String,
+            enum: ['pending', 'paid'],
+            default: 'pending',
+        },
+        sentRequests: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+            },
+        ],
     },
     { timestamps: true }
 );
@@ -68,8 +86,9 @@ customizedTourSchema.pre(/^find/, function () {
             path: 'landmarks',
             select: 'name imageCover',
         })
-        .populate({ path: 'respondingGuides', select: 'name photo' })
+        .populate({ path: 'respondingGuides.guide', select: 'name photo' })
         .populate({ path: 'acceptedGuide', select: 'name photo' });
+    // .populate({ path: 'sentRequests', select: 'name photo' });
 });
 
 const CustomizedTour = mongoose.model('CustomizedTour', customizedTourSchema);
