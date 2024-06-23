@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 
 const reviewRouter = require('./reviewRoutes');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router
     .route('/')
@@ -16,7 +16,7 @@ router
         authController.protect,
         authController.restrictTo('admin'),
         landmarkController.uploadLandmarkPhoto,
-        landmarkController.resizeLandmarkPhoto,
+        landmarkController.resizeLandmarkPhotos,
         landmarkController.setCategoryIdToBody,
         landmarkController.createLandmark
     );
@@ -41,7 +41,7 @@ router
         authController.protect,
         authController.restrictTo('admin'),
         landmarkController.uploadLandmarkPhoto,
-        landmarkController.resizeLandmarkPhoto,
+        landmarkController.resizeLandmarkPhotos,
         landmarkController.updateLandmarkImages
     )
     .delete(

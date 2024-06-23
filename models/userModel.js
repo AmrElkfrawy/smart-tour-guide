@@ -18,8 +18,10 @@ const userSchema = new mongoose.Schema(
         },
         photo: {
             type: String,
-            default: 'default.jpg',
+            default:
+                'https://lh3.googleusercontent.com/drive-viewer/AKGpihb8oMW19B9ZQtzR6au3mbwuDSF2r__m91EhTA5qgNE04XxfUszKozCQIOTuZgj7cONdbGaBEVVTMPJ2H2ysWHXPLYT5eQdmJJs=s2560',
         },
+        photoId: String,
         role: {
             type: String,
             enum: ['user', 'admin', 'guide'],

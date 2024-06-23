@@ -11,7 +11,8 @@ if (!fs.existsSync(directory)) {
 
 // Packages
 const multer = require('multer');
-const sharp = require('sharp');
+const streamifier = require('streamifier');
+const cloudinary = require('../utils/cloudinary');
 
 // models
 const User = require('./../models/userModel');
@@ -39,18 +40,28 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 exports.uploadUserPhoto = upload.single('photo');
 
-exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
+exports.resizeUserPhoto = (req, res, next) => {
+    try {
+        if (!req.file) return next();
 
-    req.file.userFilename = `user-${req.user.id}-${Date.now()}.jpeg`;
-    await sharp(req.file.buffer)
-        .resize(500, 500)
-        .toFormat('jpeg')
-        .jpeg({ quality: 90 })
-        .toFile(`public/img/users/${req.file.userFilename}`);
-
-    next();
-});
+        let cld_upload_stream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'users',
+                transformation: [
+                    { width: 500, height: 500, gravity: 'auto', crop: 'fill' },
+                ],
+            },
+            function (error, result) {
+                req.file.filename = result.secure_url;
+                req.file.photoId = result.public_id;
+                return next();
+            }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(cld_upload_stream);
+    } catch (err) {
+        return next(new AppError(err, 500));
+    }
+};
 
 const filterObj = (obj, ...allowedFields) => {
     const newObj = {};
@@ -66,10 +77,6 @@ exports.getMe = (req, res, next) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-    if (req.file) {
-        const user = await User.findById(req.user.id);
-        req.file.oldPhoto = user.photo;
-    }
     if (req.body.password || req.body.passwordConfirm) {
         return next(
             new AppError(
@@ -80,7 +87,10 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     }
 
     const filteredBody = filterObj(req.body, 'name', 'email');
-    if (req.file) filteredBody.photo = req.file.userFilename;
+    if (req.file) {
+        filteredBody.photo = req.file.filename;
+        filteredBody.photoId = req.file.photoId;
+    }
     const updatedUser = await User.findByIdAndUpdate(
         req.user.id,
         filteredBody,
@@ -89,15 +99,6 @@ exports.updateMe = catchAsync(async (req, res, next) => {
             runValidators: true,
         }
     );
-
-    if (req.file) {
-        if (req.file.oldPhoto !== 'default.jpg') {
-            req.file.userFilename = undefined;
-            await promisify(fs.unlink)(
-                path.join(__dirname, `../public/img/users/${req.file.oldPhoto}`)
-            );
-        }
-    }
 
     res.status(200).json({
         status: 'success',

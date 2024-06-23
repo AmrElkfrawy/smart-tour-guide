@@ -4,7 +4,8 @@ const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
 
 const multer = require('multer');
-const sharp = require('sharp');
+const cloudinary = require('../utils/cloudinary');
+const streamifier = require('streamifier');
 
 const fileStorage = multer.memoryStorage();
 
@@ -24,28 +25,55 @@ exports.uploadLandmarkPhoto = upload.fields([{ name: 'images', maxCount: 3 }]);
 
 // exports.test = upload.array('images', 5);
 
-exports.resizeLandmarkPhoto = catchAsync(async (req, res, next) => {
-    if (!req.files) return next();
+exports.resizeLandmarkPhotos = (req, res, next) => {
+    try {
+        if (!req.files) return next();
+        if (!req.files.images) return next();
 
-    if (req.files.images) {
-        req.body.images = [];
-        await Promise.all(
-            req.files.images.map(async (file, i) => {
-                const imageName = `landmark-${req.user.id}-${Date.now()}-${
-                    i + 1
-                }.jpeg`;
-                await sharp(file.buffer)
-                    .resize(500, 500)
-                    .toFormat('jpeg')
-                    .jpeg({ quality: 90 })
-                    .toFile(`public/img/landmarks/${imageName}`);
-                req.body.images.push(imageName);
-            })
-        );
-        req.files.landmarkFilenames = req.body.images;
+        let uploadsCompleted = 0;
+        const totalUploads = req.files.images.length;
+
+        function checkUploadsCompleted() {
+            uploadsCompleted++;
+            if (uploadsCompleted === totalUploads) {
+                next();
+            }
+        }
+
+        if (req.files.images) {
+            req.body.images = [];
+            req.body.imagesId = [];
+            req.files.images.forEach((image) => {
+                const cld_upload_stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'landmarks',
+                        transformation: [
+                            {
+                                width: 600,
+                                height: 600,
+                                gravity: 'auto',
+                                crop: 'fill',
+                            },
+                        ],
+                    },
+                    function (error, result) {
+                        if (error) {
+                            return next(new AppError(error, 500));
+                        }
+                        req.body.images.push(result.secure_url);
+                        req.body.imagesId.push(result.public_id);
+                        checkUploadsCompleted();
+                    }
+                );
+                streamifier
+                    .createReadStream(image.buffer)
+                    .pipe(cld_upload_stream);
+            });
+        }
+    } catch (err) {
+        return next(new AppError(err, 500));
     }
-    next();
-});
+};
 
 exports.setCategoryIdToParams = (req, res, next) => {
     if (!req.params && !req.params.categoryId)
@@ -80,7 +108,7 @@ exports.updateLandmarkImages = catchAsync(async (req, res, next) => {
     if (!landmark) {
         return next(new AppError('No landmark found with this ID', 404));
     }
-    let { imagesIndex, images } = req.body;
+    let { imagesIndex, images, imagesId } = req.body;
 
     if (!Array.isArray(imagesIndex)) {
         imagesIndex = [imagesIndex];
@@ -94,10 +122,11 @@ exports.updateLandmarkImages = catchAsync(async (req, res, next) => {
         return next(new AppError('Please upload all images selected', 400));
     }
     for (let i = 0; i < imagesIndex.length; i++) {
-        if (!['0', '1', '2'].includes(imagesIndex[i])) {
+        if (!['0', '1', '2', 0, 1, 2].includes(imagesIndex[i])) {
             imagesIndex[i] = i;
         }
         landmark.images[parseInt(imagesIndex[i])] = images[i];
+        landmark.imagesId[parseInt(imagesIndex[i])] = imagesId[i];
     }
     await landmark.save();
     res.status(200).json({
@@ -132,11 +161,16 @@ exports.deleteLandmarkImages = catchAsync(async (req, res, next) => {
             imagesIndex[i] = i;
         }
         landmark.images[parseInt(imagesIndex[i])] = undefined;
+        landmark.imagesId[parseInt(imagesIndex[i])] = undefined;
     }
     landmark.images = landmark.images.filter((item) => item !== null);
+    landmark.imagesId = landmark.imagesId.filter((item) => item !== null);
 
     if (landmark.images.length === 1 && landmark.images[0] === undefined) {
         landmark.images = [];
+    }
+    if (landmark.imagesId.length === 1 && landmark.imagesId[0] === undefined) {
+        landmark.imagesId = [];
     }
     await landmark.save();
     res.status(200).json({

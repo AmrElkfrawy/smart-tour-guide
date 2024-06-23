@@ -6,7 +6,8 @@ const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 
 const multer = require('multer');
-const sharp = require('sharp');
+const streamifier = require('streamifier');
+const cloudinary = require('../utils/cloudinary');
 
 const multerStorage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
@@ -22,22 +23,56 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage: multerStorage, fileFilter: fileFilter });
 exports.uploadTourImages = upload.fields([{ name: 'images', maxCount: 3 }]);
-exports.resizeTourImages = catchAsync(async (req, res, next) => {
-    if (!req.files.images) return next();
-    req.body.images = [];
-    await Promise.all(
-        req.files.images.map(async (file, i) => {
-            const filename = `tour-${req.user.id}-${Date.now()}-${i + 1}.jpeg`;
-            await sharp(file.buffer)
-                .resize(500, 500)
-                .toFormat('jpeg')
-                .jpeg({ quality: 90 })
-                .toFile(`public/img/tours/${filename}`);
-            req.body.images.push(filename);
-        })
-    );
-    next();
-});
+
+exports.resizeTourPhotos = (req, res, next) => {
+    try {
+        if (!req.files) return next();
+        if (!req.files.images) return next();
+
+        let uploadsCompleted = 0;
+        const totalUploads = req.files.images.length;
+
+        function checkUploadsCompleted() {
+            uploadsCompleted++;
+            if (uploadsCompleted === totalUploads) {
+                next();
+            }
+        }
+
+        if (req.files.images) {
+            req.body.images = [];
+            req.body.imagesId = [];
+            req.files.images.forEach((image) => {
+                const cld_upload_stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'tours',
+                        transformation: [
+                            {
+                                width: 600,
+                                height: 600,
+                                gravity: 'auto',
+                                crop: 'fill',
+                            },
+                        ],
+                    },
+                    function (error, result) {
+                        if (error) {
+                            return next(new AppError(error, 500));
+                        }
+                        req.body.images.push(result.secure_url);
+                        req.body.imagesId.push(result.public_id);
+                        checkUploadsCompleted();
+                    }
+                );
+                streamifier
+                    .createReadStream(image.buffer)
+                    .pipe(cld_upload_stream);
+            });
+        }
+    } catch (err) {
+        return next(new AppError(err, 500));
+    }
+};
 
 exports.setCategoryIdToParams = (req, res, next) => {
     if (!req.params && !req.params.tourCategoryId)
@@ -57,7 +92,7 @@ exports.updateTourImages = catchAsync(async (req, res, next) => {
     if (!tour) {
         return next(new AppError('No tour found with this ID', 404));
     }
-    let { imagesIndex, images } = req.body;
+    let { imagesIndex, images, imagesId } = req.body;
 
     if (!Array.isArray(imagesIndex)) {
         imagesIndex = [imagesIndex];
@@ -71,10 +106,11 @@ exports.updateTourImages = catchAsync(async (req, res, next) => {
         return next(new AppError('Please upload all images selected', 400));
     }
     for (let i = 0; i < imagesIndex.length; i++) {
-        if (!['0', '1', '2'].includes(imagesIndex[i])) {
+        if (!['0', '1', '2', 0, 1, 2].includes(imagesIndex[i])) {
             imagesIndex[i] = i;
         }
         tour.images[parseInt(imagesIndex[i])] = images[i];
+        tour.imagesId[parseInt(imagesIndex[i])] = imagesId[i];
     }
     await tour.save();
     res.status(200).json({
@@ -109,11 +145,16 @@ exports.deleteTourImages = catchAsync(async (req, res, next) => {
             imagesIndex[i] = i;
         }
         tour.images[parseInt(imagesIndex[i])] = undefined;
+        tour.imagesId[parseInt(imagesIndex[i])] = undefined;
     }
     tour.images = tour.images.filter((item) => item !== null);
+    tour.imagesId = tour.imagesId.filter((item) => item !== null);
 
     if (tour.images.length === 1 && tour.images[0] === undefined) {
         tour.images = [];
+    }
+    if (tour.imagesId.length === 1 && tour.imagesId[0] === undefined) {
+        tour.imagesId = [];
     }
     await tour.save();
     res.status(200).json({

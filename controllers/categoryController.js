@@ -1,5 +1,6 @@
 const multer = require('multer');
-const sharp = require('sharp');
+const cloudinary = require('../utils/cloudinary');
+const streamifier = require('streamifier');
 
 const Category = require('./../models/categoryModel');
 const catchAsync = require('./../utils/catchAsync');
@@ -23,20 +24,28 @@ const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 
 exports.uploadCategoryPhoto = upload.single('imageCover');
 
-exports.resizeCategoryPhoto = catchAsync(async (req, res, next) => {
-    if (!req.file) return next();
+exports.resizeCategoryPhoto = (req, res, next) => {
+    try {
+        if (!req.file) return next();
 
-    // only admin can upload images
-    req.file.categoryFilename = `category-${req.user.id}-${Date.now()}.jpeg`;
-    await sharp(req.file.buffer)
-        .resize(500, 500)
-        .toFormat('jpeg')
-        .jpeg({ quality: 90 })
-        .toFile(`public/img/categories/${req.file.categoryFilename}`);
-
-    req.body.imageCover = req.file.categoryFilename;
-    next();
-});
+        let cld_upload_stream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'categories',
+                transformation: [
+                    { width: 600, height: 600, gravity: 'auto', crop: 'fill' },
+                ],
+            },
+            function (error, result) {
+                req.body.imageCover = result.secure_url;
+                req.body.imageCoverId = result.public_id;
+                return next();
+            }
+        );
+        streamifier.createReadStream(req.file.buffer).pipe(cld_upload_stream);
+    } catch (err) {
+        return next(new AppError(err, 500));
+    }
+};
 
 exports.getAllCategories = factory.getAll(Category);
 exports.getCategory = factory.getOne(Category);

@@ -14,7 +14,7 @@ router
         authController.protect,
         authController.restrictTo('admin'),
         tourController.uploadTourImages,
-        tourController.resizeTourImages,
+        tourController.resizeTourPhotos,
         tourController.createTour
     );
 
@@ -38,7 +38,7 @@ router
         authController.protect,
         authController.restrictTo('admin'),
         tourController.uploadTourImages,
-        tourController.resizeTourImages,
+        tourController.resizeTourPhotos,
         tourController.updateTourImages
     )
     .delete(

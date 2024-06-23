@@ -21,6 +21,7 @@ const landmarkSchema = new mongoose.Schema(
             trim: true,
         },
         images: [String],
+        imagesId: [String],
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Category',

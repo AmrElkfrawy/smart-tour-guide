@@ -19,6 +19,7 @@ const tourSchema = new mongoose.Schema(
             required: [true, 'A tour must have a duration'],
         },
         images: [String],
+        imagesId: [String],
         locations: [
             {
                 type: {
