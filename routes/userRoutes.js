@@ -29,13 +29,14 @@ router.delete('/deleteMe', userController.deleteMe);
 
 router.get('/:id', userController.getUser);
 
-router.use(authController.restrictTo('admin'));
-router.route('/').get(userController.getAllUsers);
+router
+    .route('/')
+    .get(authController.restrictTo('admin'), userController.getAllUsers);
 router
     .route('/:id')
-    .patch(userController.updateUser)
-    .delete(userController.deleteUser);
+    .patch(authController.restrictTo('admin'), userController.updateUser)
+    .delete(authController.restrictTo('admin'), userController.deleteUser);
 
-router.use('/:guideId/reviews', reviewRouter);
+router.use('/:subjectId/reviews', reviewRouter);
 
 module.exports = router;

@@ -1,10 +1,9 @@
 const Review = require('./../models/reviewModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
-const APIFeatures = require('./../utils/apiFeatures');
 const factory = require('./handlerFactory');
 const CustomizedTour = require('../models/customizedTourModel');
-const Landmark = require('../models/landmarkModel');
+const Booking = require('../models/bookingModel');
 
 exports.checkIfAuth = catchAsync(async (req, res, next) => {
     const review = await Review.findById(req.params.id);
@@ -23,6 +22,8 @@ exports.setSubjectUserIds = (req, res, next) => {
     // Allow nested routes
     if (!req.body.subject) req.body.subject = req.params.subjectId;
     if (!req.body.user) req.body.user = req.user.id;
+
+    next();
 };
 
 // Strategy functions
@@ -64,27 +65,6 @@ exports.checkReviewPermission = catchAsync(async (req, res, next) => {
 
     next();
 });
-
-exports.setSubjectAndUserIDs = (req, res, next) => {
-    // Allow nested routes
-    const { reviewType, subject } = req.body;
-
-    // Dynamically set the subject ID based on the reviewType
-    if (reviewType === 'Landmark' && !req.body.subject) {
-        req.body.subject = req.params.landmarkId;
-    } else if (reviewType === 'Tour' && !req.body.subject) {
-        req.body.subject = req.params.tourId;
-    } else if (reviewType === 'User' && !req.body.subject) {
-        req.body.subject = req.params.guideId;
-    }
-
-    // Always set the user ID from the authenticated user
-    if (!req.body.user) {
-        req.body.user = req.user.id;
-    }
-
-    next();
-};
 
 exports.getAllReviews = factory.getAll(Review);
 exports.getReview = factory.getOne(Review);
