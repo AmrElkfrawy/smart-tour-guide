@@ -1,5 +1,6 @@
 const CustomizedTour = require('../models/customizedTourModel');
 const User = require('../models/userModel');
+const Landmark = require('../models/landmarkModel');
 
 const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
@@ -78,6 +79,36 @@ exports.getCustomizedTourById = factory.getOne(CustomizedTour);
 exports.createCustomizedTour = factory.createOne(CustomizedTour);
 exports.updateCustomizedTour = factory.updateOne(CustomizedTour);
 exports.deleteCustomizedTour = factory.deleteOne(CustomizedTour);
+
+exports.getAllGovernorates = catchAsync(async (req, res, next) => {
+    const governorates = await Landmark.distinct('location.governorate');
+
+    if (!governorates) {
+        return next(new AppError('No governorates found.', 404));
+    }
+
+    res.status(200).json({
+        status: 'success',
+        results: governorates.length,
+        data: {
+            governorates,
+        },
+    });
+});
+
+exports.getLandmarksByGovernorate = catchAsync(async (req, res, next) => {
+    const landmarks = await Landmark.find({
+        'location.governorate': req.params.governorate,
+    });
+
+    res.status(200).json({
+        status: 'success',
+        results: landmarks.length,
+        data: {
+            landmarks,
+        },
+    });
+});
 
 exports.getMyTourRequests = catchAsync(async (req, res, next) => {
     const features = new APIFeatures(
@@ -176,11 +207,11 @@ exports.respondToTourRequest = catchAsync(async (req, res, next) => {
         return next(new AppError('Tour request not found. ', 404));
     }
 
-    // Check if the guide's languages and cities match the tour request
+    // Check if the guide's languages and governorates match the tour request
     const languagesMatch = tourRequest.spokenLanguages.every((lang) =>
         guide.languages.includes(lang)
     );
-    const cityMatch = guide.cities.includes(tourRequest.city);
+    const cityMatch = guide.governorates.includes(tourRequest.governorate);
 
     if (!languagesMatch || !cityMatch) {
         return next(
@@ -280,7 +311,7 @@ exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
     const features = new APIFeatures(
         User.find({
             languages: { $all: request.spokenLanguages },
-            cities: { $in: [request.city] },
+            governorates: { $in: [request.governorate] },
         }),
         req.query
     )
@@ -329,7 +360,7 @@ exports.sendRequestToGuide = catchAsync(async (req, res, next) => {
     const guide = await User.findOne({
         _id: guideId,
         languages: { $all: tourRequest.spokenLanguages },
-        cities: { $in: [tourRequest.city] },
+        governorates: { $in: [tourRequest.governorate] },
     });
 
     if (!guide) {

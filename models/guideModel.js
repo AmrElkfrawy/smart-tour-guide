@@ -9,7 +9,7 @@ const guideSchema = new mongoose.Schema(
         languages: {
             type: [String],
         },
-        cities: {
+        governorates: {
             type: [String],
         },
         gallery: {

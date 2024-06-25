@@ -8,7 +8,7 @@ const customizedTourSchema = new mongoose.Schema(
             ref: 'User',
             required: true,
         },
-        city: {
+        governorate: {
             type: String,
             required: true,
         },
