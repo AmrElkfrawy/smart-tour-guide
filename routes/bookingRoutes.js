@@ -23,6 +23,12 @@ router.post(
     bookingController.createTourBookingCheckout
 );
 
+router.post(
+    '/custom-checkout-session/:customizedTourId',
+    authController.protect,
+    bookingController.createCustomTourBookingCheckout
+);
+
 router.use(authController.protect);
 router.route('/:id').get(bookingController.getBooking);
 router
