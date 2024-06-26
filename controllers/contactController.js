@@ -2,9 +2,40 @@ const Contact = require('./../models/contactModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
+const io = require('./../socket');
 
-exports.createContactMessage = factory.createOne(Contact);
-exports.deleteContactMessageById = factory.deleteOne(Contact);
+exports.createContactMessage = catchAsync(async (req, res, next) => {
+    const newContactMessage = await Contact.create(req.body);
+    io.getIO().of('/admin').emit('contactMessage', {
+        action: 'create',
+        data: newContactMessage,
+    });
+
+    res.status(201).json({
+        status: 'success',
+        data: {
+            contactMessage: newContactMessage,
+        },
+    });
+});
+
+exports.deleteContactMessageById = catchAsync(async (req, res, next) => {
+    const contactMessage = await Contact.findByIdAndDelete(req.params.id);
+
+    if (!contactMessage) {
+        return next(new AppError('No message found with this ID', 404));
+    }
+
+    io.getIO().of('/admin').emit('contactMessage', {
+        action: 'delete',
+        data: contactMessage,
+    });
+
+    res.status(204).json({
+        status: 'success',
+        data: null,
+    });
+});
 
 exports.getContactMessageById = catchAsync(async (req, res, next) => {
     const contactMessage = await Contact.findByIdAndUpdate(

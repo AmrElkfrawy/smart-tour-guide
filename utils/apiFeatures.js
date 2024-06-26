@@ -26,7 +26,9 @@ class APIFeatures {
         if (this.queryString.location) {
             const locations = this.queryString.location.split(',');
             this.query = this.query.find({
-                'location.governorate': { $in: locations },
+                'location.governorate': {
+                    $in: locations.map((loc) => new RegExp(loc, 'i')),
+                },
             });
         }
 
