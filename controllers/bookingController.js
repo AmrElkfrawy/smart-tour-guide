@@ -275,27 +275,27 @@ exports.createBooking = catchAsync(async (req, res, next) => {
                 guide: item.tour.guide,
             };
         });
-        // await Booking.create({
-        //     user: userId,
-        //     totalPrice: price,
-        //     firstName,
-        //     lastName,
-        //     phone,
-        //     tours,
-        // });
+        await Booking.create({
+            user: userId,
+            totalPrice: price,
+            firstName,
+            lastName,
+            phone,
+            tours,
+        });
 
-        // const updatePromises = await Promise.all(
-        //     cart.cartItems.map(async (item) => {
-        //         return await Tour.findByIdAndUpdate(
-        //             item.tour._id,
-        //             {
-        //                 $inc: { bookings: item.groupSize },
-        //             },
-        //             { new: true }
-        //         );
-        //     })
-        // );
-        // await Cart.findByIdAndDelete(cartId);
+        const updatePromises = await Promise.all(
+            cart.cartItems.map(async (item) => {
+                return await Tour.findByIdAndUpdate(
+                    item.tour._id,
+                    {
+                        $inc: { bookings: item.groupSize },
+                    },
+                    { new: true }
+                );
+            })
+        );
+        await Cart.findByIdAndDelete(cartId);
         const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
         res.redirect(newUrl);
     } else if (req.query.type === 'custom') {
