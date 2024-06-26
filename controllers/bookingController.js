@@ -82,7 +82,7 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
             req.user._id
         }&price=${cart.totalCartPrice}&firstName=${
             req.body.firstName
-        }&lastName=${req.body.lastName}&phone=${req.body.phone}$type=cart`,
+        }&lastName=${req.body.lastName}&phone=${req.body.phone}&type=cart`,
         cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
         customer_email: req.user.email,
         client_reference_id: req.params.cartId,
@@ -275,27 +275,27 @@ exports.createBooking = catchAsync(async (req, res, next) => {
                 guide: item.tour.guide,
             };
         });
-        await Booking.create({
-            user: userId,
-            totalPrice: price,
-            firstName,
-            lastName,
-            phone,
-            tours,
-        });
+        // await Booking.create({
+        //     user: userId,
+        //     totalPrice: price,
+        //     firstName,
+        //     lastName,
+        //     phone,
+        //     tours,
+        // });
 
-        const updatePromises = await Promise.all(
-            cart.cartItems.map(async (item) => {
-                return await Tour.findByIdAndUpdate(
-                    item.tour._id,
-                    {
-                        $inc: { bookings: item.groupSize },
-                    },
-                    { new: true }
-                );
-            })
-        );
-        await Cart.findByIdAndDelete(cartId);
+        // const updatePromises = await Promise.all(
+        //     cart.cartItems.map(async (item) => {
+        //         return await Tour.findByIdAndUpdate(
+        //             item.tour._id,
+        //             {
+        //                 $inc: { bookings: item.groupSize },
+        //             },
+        //             { new: true }
+        //         );
+        //     })
+        // );
+        // await Cart.findByIdAndDelete(cartId);
         const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
         res.redirect(newUrl);
     } else if (req.query.type === 'custom') {
