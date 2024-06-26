@@ -6,7 +6,7 @@ const io = require('./../socket');
 
 exports.createContactMessage = catchAsync(async (req, res, next) => {
     const newContactMessage = await Contact.create(req.body);
-    io.getIO().of('/admin').emit('contactMessage', {
+    io.getIO().of('/admin').emit('contactMessage:create', {
         action: 'create',
         data: newContactMessage,
     });
@@ -26,7 +26,7 @@ exports.deleteContactMessageById = catchAsync(async (req, res, next) => {
         return next(new AppError('No message found with this ID', 404));
     }
 
-    io.getIO().of('/admin').emit('contactMessage', {
+    io.getIO().of('/admin').emit('contactMessage:delete', {
         action: 'delete',
         data: contactMessage,
     });

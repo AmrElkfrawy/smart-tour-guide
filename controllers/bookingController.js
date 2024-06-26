@@ -331,6 +331,7 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         });
 
         customizedTour.bookings += 1;
+        customizedTour.paymentStatus = 'paid';
         await customizedTour.save();
         const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
         res.redirect(newUrl);
