@@ -9,7 +9,7 @@ const Guide = require('./../models/guideModel');
 // utils
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
-const sendEmail = require('./../utils/email');
+const Email = require('./../utils/email');
 
 const signToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, {
@@ -50,48 +50,38 @@ exports.signup = catchAsync(async (req, res, next) => {
         });
     }
 
-    return createSendToken(newUser, 201, req, res, next);
+    createSendToken(newUser, 201, req, res, next);
 
-    /*
-    const verifyEmailToken = newUser.createEmailVerificationToken();
+    // const verifyEmailToken = newUser.createEmailVerificationToken();
 
-    try {
-        const verificationURL = `${req.protocol}://${req.get(
-            'host'
-        )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
-        const message = `Welcome to our application! Please verify your email address by clicking the following link: ${verificationURL}`;
+    // try {
+    //     const verificationURL = `${req.protocol}://${req.get(
+    //         'host'
+    //     )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
 
-        await sendEmail({
-            email: newUser.email,
-            subject: 'Verify your email address',
-            message,
-        });
+    //     await new Email(newUser, verificationURL).sendVerifyEmail();
 
-        // Send response indicating successful user creation and send token
-        await newUser.save({ validateBeforeSave: false });
-        newUser.emailVerificationToken = undefined;
-        newUser.verificationTokenExpires = undefined;
-        createSendToken(newUser, 201, req, res, next);
-    } catch (err) {
-        // If there's an error sending the email, handle it
-        newUser.emailVerificationToken = undefined;
-        newUser.verificationTokenExpires = undefined;
-        await newUser.save({ validateBeforeSave: false });
+    //     // Send response indicating successful user creation and send token
+    //     await newUser.save({ validateBeforeSave: false });
+    //     newUser.emailVerificationToken = undefined;
+    //     newUser.verificationTokenExpires = undefined;
+    //     createSendToken(newUser, 201, req, res, next);
+    // } catch (err) {
+    //     // If there's an error sending the email, handle it
+    //     newUser.emailVerificationToken = undefined;
+    //     newUser.verificationTokenExpires = undefined;
+    //     await newUser.save({ validateBeforeSave: false });
 
-        return next(
-            new AppError(
-                'There was an error sending the verification email. Try again later!',
-                500
-            )
-        );
-    }*/
+    //     return next(
+    //         new AppError(
+    //             'There was an error sending the verification email. Try again later!',
+    //             500
+    //         )
+    //     );
+    // }
 });
 
 exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
-    res.status(200).json({
-        status: 'success',
-        message: 'Verification email resent successfully.',
-    });
     const user = await User.findOne({ email: req.user.email });
 
     if (!user) {
@@ -109,12 +99,8 @@ exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
         const verificationURL = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
-        const message = `Welcome back! Please verify your email address by clicking the following link: ${verificationURL}`;
-        await sendEmail({
-            email: user.email,
-            subject: 'Resend Verification Email',
-            message,
-        });
+
+        await new Email(user, verificationURL).resendVerifyEmail();
 
         res.status(200).json({
             status: 'success',
@@ -168,11 +154,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
     user.verificationTokenExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    // Send response indicating successful email verification
-    res.status(200).json({
-        status: 'success',
-        message: 'Email verification successful. You can now log in.',
-    });
+    res.render('verifySuccess');
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -275,12 +257,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     try {
-        const message = `Your password reset code is ${resetCode}. Please use this code to reset your password.`;
-        await sendEmail({
-            email: user.email,
-            subject: 'Reset password (valid for 2 mins)',
-            message,
-        });
+        await new Email(user, resetCode).sendPasswordReset();
 
         res.status(200).json({
             status: 'success',
@@ -360,6 +337,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     user.passwordResetCode = undefined;
     user.passwordResetCodeExpires = undefined;
     await user.save();
+    await new Email(user, null).sendPasswordResetSuccess();
 
     createSendToken(user, 200, req, res);
 });

@@ -27,6 +27,9 @@ const contactRouter = require('./routes/contactRoutes');
 
 const app = express();
 
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views/emails'));
+
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
 
