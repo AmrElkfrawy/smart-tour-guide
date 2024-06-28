@@ -68,6 +68,7 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
                 currency: 'usd',
                 product_data: {
                     name: item.tour.name,
+                    images: [item.tour.images[0]],
                 },
             },
             quantity: item.groupSize,
@@ -239,13 +240,13 @@ exports.createBooking = catchAsync(async (req, res, next) => {
             firstName,
             lastName,
             phone,
+            tourType: 'standard',
             tours: [
                 {
                     tour: tourId,
                     groupSize,
                     price: price * groupSize,
                     tourDate,
-                    tourType: 'standard',
                     guide: guideId,
                 },
             ],
@@ -271,13 +272,13 @@ exports.createBooking = catchAsync(async (req, res, next) => {
                 groupSize: item.groupSize,
                 price: item.itemPrice,
                 tourDate: item.tourDate,
-                tourType: 'standard',
                 guide: item.tour.guide,
             };
         });
         await Booking.create({
             user: userId,
             totalPrice: price,
+            tourType: 'standard',
             firstName,
             lastName,
             phone,
@@ -312,19 +313,19 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         }
 
         const guideId = customizedTour.acceptedGuide._id;
-
         await Booking.create({
             user: customizedTour.user._id,
             totalPrice: customizedTour.price,
             firstName,
             lastName,
             phone,
+            tourType: 'customized',
             tours: [
                 {
                     tour: customizedTourId,
                     groupSize: 1,
                     price: customizedTour.price,
-                    tourType: 'custom',
+                    tourDate: customizedTour.startDate,
                     guide: guideId,
                 },
             ],

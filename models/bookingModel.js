@@ -40,17 +40,19 @@ const bookingSchema = new mongoose.Schema(
                     type: Date,
                     required: [true, 'Tour date is required'],
                 },
-                tourType: {
-                    type: String,
-                    enum: ['standard', 'customized'],
-                    default: 'standard',
-                },
+
                 guide: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'User',
                 },
             },
         ],
+        tourType: {
+            type: String,
+            enum: ['standard', 'customized'],
+            default: 'standard',
+        },
+
         status: {
             type: String,
             enum: ['confirmed', 'cancelled'],
