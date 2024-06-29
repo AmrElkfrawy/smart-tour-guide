@@ -134,9 +134,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 
     // If user not found or token has expired
     if (!user) {
-        return next(
-            new AppError('Verification token is invalid or has expired.', 400)
-        );
+        return res.render('verifyFail');
     }
 
     // If the user is already verified, return a message indicating that
@@ -154,7 +152,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
     user.verificationTokenExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    res.render('verifySuccess');
+    return res.render('verifySuccess');
 });
 
 exports.login = catchAsync(async (req, res, next) => {

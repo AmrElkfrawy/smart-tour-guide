@@ -255,7 +255,7 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         tour.bookings += groupSize;
         await tour.save();
         const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
-        res.redirect(newUrl);
+        res.render('paymentSuccess');
     } else if (req.query.type === 'cart') {
         const { cartId, userId, price, firstName, lastName, phone } = req.query;
         if (!cartId || !userId || !price || !firstName || !lastName || !phone) {
@@ -298,7 +298,7 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         );
         await Cart.findByIdAndDelete(cartId);
         const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
-        res.redirect(newUrl);
+        res.render('paymentSuccess');
     } else if (req.query.type === 'custom') {
         const { customizedTourId, firstName, lastName, phone } = req.query;
         if (!customizedTourId || !firstName || !lastName || !phone) {
@@ -335,6 +335,6 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         customizedTour.paymentStatus = 'paid';
         await customizedTour.save();
         const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
-        res.redirect(newUrl);
+        res.render('paymentSuccess');
     }
 });
