@@ -1,19 +1,18 @@
-const appError = require('./utils/appError');
 const jwt = require('jsonwebtoken');
 let io;
 
 const authSocketMiddleware = (socket, next) => {
     const token = socket.handshake.query.token;
     if (!token) {
-        return next(new Error('Authentication error'));
+        return next(new Error('Authentication error: Token missing'));
     }
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            return next(new appError('Authentication error', 401));
+            return next(new Error('Authentication error: Invalid token'));
         }
 
         if (decoded.role !== 'admin') {
-            return next(new appError('Authentication error', 401));
+            return next(new Error('Authentication error: Not an admin'));
         }
         next();
     });
@@ -29,7 +28,7 @@ module.exports = {
     },
     getIO: () => {
         if (!io) {
-            return new Error('Socket.io not initialized!');
+            throw new Error('Socket.io not initialized!');
         }
         return io;
     },
