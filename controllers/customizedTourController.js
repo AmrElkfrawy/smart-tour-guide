@@ -312,7 +312,7 @@ exports.findGuidesForTourRequest = catchAsync(async (req, res, next) => {
         User.find({
             languages: { $all: request.spokenLanguages },
             governorates: { $in: [request.governorate] },
-        }),
+        }).select('name photo rating ratingsQuantity'),
         req.query
     )
         .filter()
