@@ -37,6 +37,10 @@ router
     .patch(authController.restrictTo('admin'), userController.updateUser)
     .delete(authController.restrictTo('admin'), userController.deleteUser);
 
+router
+    .route('/')
+    .post(authController.restrictTo('admin'), userController.createUser);
+
 router.use('/:subjectId/reviews', reviewRouter);
 
 module.exports = router;
