@@ -180,3 +180,5 @@ exports.deleteLandmarkImages = catchAsync(async (req, res, next) => {
         },
     });
 });
+
+exports.getNearbyTours = catchAsync(async (req, res, next) => {});
