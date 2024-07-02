@@ -24,6 +24,7 @@ const wishlistRouter = require('./routes/wishlistRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
 const tourCategoryRouter = require('./routes/tourCategoryRoutes');
 const contactRouter = require('./routes/contactRoutes');
+const chatbotRouter = require('./routes/chatbotRoutes');
 
 const app = express();
 
@@ -96,6 +97,7 @@ app.use('/api/v1/wishlists', wishlistRouter);
 app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/tourCategories', tourCategoryRouter);
 app.use('/api/v1/contact-us', contactRouter);
+app.use('/api/v1/chatbot', chatbotRouter);
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
