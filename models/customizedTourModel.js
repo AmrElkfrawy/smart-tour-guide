@@ -73,6 +73,14 @@ const customizedTourSchema = new mongoose.Schema(
                 ref: 'User',
             },
         ],
+        guideConfirmCompletion: {
+            type: Boolean,
+            default: false,
+        },
+        userConfirmCompletion: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

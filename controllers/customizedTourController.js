@@ -455,3 +455,85 @@ exports.cancelRequestToGuide = catchAsync(async (req, res, next) => {
         message: 'Request cancelled.',
     });
 });
+
+exports.confirmCompletionGuide = catchAsync(async (req, res, next) => {
+    const { tourId } = req.params;
+
+    const tour = await CustomizedTour.findOneAndUpdate(
+        {
+            _id: tourId,
+            acceptedGuide: req.user.id,
+            paymentStatus: 'paid',
+            endDate: { $lte: Date.now() },
+        },
+        {
+            $set: {
+                guideConfirmCompletion: true,
+            },
+        },
+        { new: true }
+    );
+
+    if (!tour) {
+        return next(
+            new AppError(
+                'Tour can not be marked as completed at this time.',
+                400
+            )
+        );
+    }
+
+    if (tour.userConfirmCompletion) {
+        tour.status = 'completed';
+        await tour.save();
+    }
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Guide confirmed tour completion.',
+        data: {
+            tour,
+        },
+    });
+});
+
+exports.confirmCompletionUser = catchAsync(async (req, res, next) => {
+    const { tourId } = req.params;
+
+    const tour = await CustomizedTour.findOneAndUpdate(
+        {
+            _id: tourId,
+            user: req.user.id,
+            paymentStatus: 'paid',
+            endDate: { $lte: Date.now() },
+        },
+        {
+            $set: {
+                userConfirmCompletion: true,
+            },
+        },
+        { new: true }
+    );
+
+    if (!tour) {
+        return next(
+            new AppError(
+                'Tour can not be marked as completed at this time.',
+                400
+            )
+        );
+    }
+
+    if (tour.guideConfirmCompletion) {
+        tour.status = 'completed';
+        await tour.save();
+    }
+
+    res.status(200).json({
+        status: 'success',
+        message: 'User confirmed tour completion.',
+        data: {
+            tour,
+        },
+    });
+});

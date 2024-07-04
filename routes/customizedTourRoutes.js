@@ -12,6 +12,19 @@ router.get(
     customizedTourController.getLandmarksByGovernorate
 );
 
+// Routes for tour completion
+router.patch(
+    '/:tourId/confirm-completion/guide',
+    authController.restrictTo('guide'),
+    customizedTourController.confirmCompletionGuide
+);
+
+router.patch(
+    '/:tourId/confirm-completion/user',
+    authController.restrictTo('user'),
+    customizedTourController.confirmCompletionUser
+);
+
 // Routes for tour requests
 router.get(
     '/my-requests',

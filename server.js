@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const startTourCompletionCron = require('./cronJobs/tourCompletion');
 
 process.on('uncaughtException', (err) => {
     console.log('Uncaught exception, Application is terminating.');
@@ -22,6 +23,9 @@ mongoose
     .connect(dbConnection)
     .then(() => {
         console.log('DB connection successful');
+
+        startTourCompletionCron();
+
         server = app.listen(port, () => {
             console.log(`Starting server on port ${port}`);
         });
