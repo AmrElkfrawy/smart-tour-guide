@@ -122,6 +122,7 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
                 currency: 'usd',
                 product_data: {
                     name: tour.name,
+                    images: [tour.images[0]],
                 },
             },
             quantity: groupSize,
@@ -254,8 +255,10 @@ exports.createBooking = catchAsync(async (req, res, next) => {
 
         tour.bookings += groupSize;
         await tour.save();
-        const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
-        res.render('paymentSuccess');
+        const newUrl = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=success`;
+        res.redirect(newUrl);
     } else if (req.query.type === 'cart') {
         const { cartId, userId, price, firstName, lastName, phone } = req.query;
         if (!cartId || !userId || !price || !firstName || !lastName || !phone) {
@@ -297,8 +300,10 @@ exports.createBooking = catchAsync(async (req, res, next) => {
             })
         );
         await Cart.findByIdAndDelete(cartId);
-        const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
-        res.render('paymentSuccess');
+        const newUrl = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=success`;
+        res.redirect(newUrl);
     } else if (req.query.type === 'custom') {
         const { customizedTourId, firstName, lastName, phone } = req.query;
         if (!customizedTourId || !firstName || !lastName || !phone) {
@@ -334,7 +339,17 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         customizedTour.bookings += 1;
         customizedTour.paymentStatus = 'paid';
         await customizedTour.save();
-        const newUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
+        const newUrl = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=success`;
+        res.redirect(newUrl);
+    }
+});
+
+exports.redirectBooking = catchAsync(async (req, res, next) => {
+    if (req.query.status === 'success') {
         res.render('paymentSuccess');
+    } else {
+        res.render('paymentFailure');
     }
 });

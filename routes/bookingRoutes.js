@@ -5,6 +5,8 @@ const authController = require('../controllers/authController');
 
 const router = express.Router();
 
+router.get('/redirect', bookingController.redirectBooking);
+
 router.get(
     '/create',
     bookingController.createBooking,
