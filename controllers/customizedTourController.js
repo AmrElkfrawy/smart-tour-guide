@@ -74,7 +74,38 @@ exports.setUserIdToBody = (req, res, next) => {
     next();
 };
 
-exports.getAllCustomizedTours = factory.getAll(CustomizedTour);
+exports.getAllCustomizedTours = catchAsync(async (req, res, next) => {
+    const filter =
+        req.user.role === 'admin'
+            ? {}
+            : {
+                  // Check if every language in spokenLanguages is included in the guide's languages
+                  spokenLanguages: {
+                      $not: { $elemMatch: { $nin: req.user.languages } },
+                  },
+                  // Check if the tour's governorate is included in the guide's governorates
+                  governorate: { $in: req.user.governorates },
+              };
+
+    // EXECUTE QUERY
+    const features = new APIFeatures(CustomizedTour.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+    const docs = await features.query;
+
+    // SEND RESPONSE
+    res.status(200).json({
+        status: 'success',
+        requestedAt: req.requestTime,
+        results: docs.length,
+        data: {
+            docs,
+        },
+    });
+});
+
 exports.getCustomizedTourById = factory.getOne(CustomizedTour);
 exports.createCustomizedTour = factory.createOne(CustomizedTour);
 exports.updateCustomizedTour = factory.updateOne(CustomizedTour);
@@ -99,7 +130,7 @@ exports.getAllGovernorates = catchAsync(async (req, res, next) => {
 exports.getLandmarksByGovernorate = catchAsync(async (req, res, next) => {
     const landmarks = await Landmark.find({
         'location.governorate': req.params.governorate,
-    });
+    }).select('name photo description');
 
     res.status(200).json({
         status: 'success',

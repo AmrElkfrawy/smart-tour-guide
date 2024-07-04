@@ -84,10 +84,16 @@ customizedTourSchema.pre(/^find/, function () {
     })
         .populate({
             path: 'landmarks',
-            select: 'name imageCover',
+            select: 'name images',
         })
-        .populate({ path: 'respondingGuides.guide', select: 'name photo' })
-        .populate({ path: 'acceptedGuide', select: 'name photo' });
+        .populate({
+            path: 'respondingGuides.guide',
+            select: 'name photo rating ratingsQuantity',
+        })
+        .populate({
+            path: 'acceptedGuide',
+            select: 'name photo rating ratingsQuantity',
+        });
     // .populate({ path: 'sentRequests', select: 'name photo' });
 });
 
