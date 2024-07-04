@@ -44,7 +44,7 @@ exports.resizeUserPhoto = (req, res, next) => {
     try {
         if (!req.file) return next();
 
-        let cld_upload_stream = cloudinary.uploader.upload_stream(
+        let cld_upload_stcream = cloudinary.uploader.upload_stream(
             {
                 folder: 'users',
                 transformation: [
@@ -121,3 +121,23 @@ exports.getAllUsers = factory.getAll(User);
 exports.getUser = factory.getOne(User);
 exports.updateUser = factory.updateOne(User);
 exports.deleteUser = factory.deleteOne(User);
+
+exports.createUser = catchAsync(async (req, res, next) => {
+    const { name, email, password, role } = req.body;
+    newUser = await User.create({
+        name,
+        email,
+        password,
+        role,
+        emailVerified: true,
+        passwordConfirm: password,
+    });
+
+    newUser.password = undefined;
+    newUser.passwordConfirm = undefined;
+
+    return res.json({
+        status: 'success',
+        doc: newUser,
+    });
+});

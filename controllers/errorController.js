@@ -54,6 +54,11 @@ const handleJWTExpiredError = () =>
     new AppError('Your token has expired! Please log in again.', 401);
 
 const sendErrorDev = (err, req, res) => {
+    console.error('Error Details:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+    });
     return res.status(err.statusCode).json({
         status: err.status,
         error: err,
@@ -65,13 +70,22 @@ const sendErrorDev = (err, req, res) => {
 const sendErrorProd = (err, req, res) => {
     // Operational, trusted error
     if (err.isOperational) {
+        console.error('Operational Error:', {
+            name: err.name,
+            message: err.message,
+            stack: err.stack,
+        });
         return res.status(err.statusCode).json({
             status: err.status,
             message: err.message,
         });
     }
     // Programming or other unknown error
-    console.error('ERROR', err);
+    console.error('Unknown Error:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+    });
     // generic message
     return res.status(500).json({
         status: 'error',
@@ -86,6 +100,8 @@ module.exports = (err, req, res, next) => {
     if (process.env.NODE_ENV === 'development') {
         sendErrorDev(err, req, res);
     } else if (process.env.NODE_ENV === 'production') {
+        console.log('err', err);
+        console.log('err message', err.message);
         let error = JSON.parse(JSON.stringify(err));
         error.message = err.message;
 

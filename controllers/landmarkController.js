@@ -180,3 +180,30 @@ exports.deleteLandmarkImages = catchAsync(async (req, res, next) => {
         },
     });
 });
+
+const Tour = require('./../models/tourModel');
+// normall in lat, lng
+exports.getRecommendations = catchAsync(async (req, res, next) => {
+    const landmark = await Landmark.findById(req.params.id);
+    if (!landmark) {
+        return next(new AppError('No landmark found with this ID', 404));
+    }
+    const lat = landmark.location.coordinates[1];
+    const lng = landmark.location.coordinates[0];
+
+    const tours = await Tour.find({
+        locations: {
+            $geoWithin: {
+                $centerSphere: [[lng, lat], 150 / 6378.1],
+            },
+        },
+    }).limit(4);
+
+    return res.status(200).json({
+        status: 'success',
+        length: tours.length,
+        docs: {
+            tours,
+        },
+    });
+});

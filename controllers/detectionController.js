@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const opencage = require('opencage-api-client');
 
 const catchAsync = require('../utils/catchAsync');
 const multer = require('multer');
@@ -45,29 +46,50 @@ const upload = multer({ storage: fileStorage, fileFilter: fileFilter });
 exports.uploadLandmarkPhoto = upload.single('photo');
 
 exports.detect = catchAsync(async (req, res, next) => {
-    let apiUrl, result;
-    if (req.body.location) {
-        if (req.body.location.toLowerCase() === 'alexandria') {
+    let apiUrl,
+        result,
+        skip = false;
+    if (req.body.lat && req.body.lng) {
+        const data = await opencage.geocode({
+            q: `${req.body.lat}, ${req.body.lng}`,
+            language: 'en',
+        });
+        const place = data.results[0];
+        let city = place.components.city;
+        if (city === undefined) {
+            city = 'unknown';
+        }
+
+        if (city.toLowerCase() === 'alexandria') {
             apiUrl =
                 'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_Alex_v0.1';
-        } else if (req.body.location.toLowerCase() === 'luxor') {
+        } else if (city.toLowerCase() === 'luxor') {
             apiUrl =
                 'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_Luxor_v1.0';
-        } else if (req.body.location.toLowerCase() === 'giza') {
+        } else if (city.toLowerCase() === 'giza') {
             apiUrl =
                 'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_GizaVersion1.01';
-        } else if (req.body.location.toLowerCase() === 'cairo') {
+        } else if (city.toLowerCase() === 'cairo') {
             apiUrl =
                 'https://api-inference.huggingface.co/models/yotasr/Smart_Tour_CairoVersion1.01';
+        } else {
+            result = [
+                {
+                    label: 'City not supported, We are working to add more cities soon.',
+                },
+            ];
+            skip = true;
         }
-        const response = await fetch(apiUrl, {
-            headers: {
-                Authorization: process.env.MODEL_AUTH_TOKEN,
-            },
-            method: 'POST',
-            body: req.file.buffer,
-        });
-        result = await response.json();
+        if (!skip) {
+            const response = await fetch(apiUrl, {
+                headers: {
+                    Authorization: process.env.MODEL_AUTH_TOKEN,
+                },
+                method: 'POST',
+                body: req.file.buffer,
+            });
+            result = await response.json();
+        }
     }
 
     let jsonRes = {};

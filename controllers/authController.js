@@ -50,35 +50,33 @@ exports.signup = catchAsync(async (req, res, next) => {
         });
     }
 
-    createSendToken(newUser, 201, req, res, next);
+    const verifyEmailToken = newUser.createEmailVerificationToken();
 
-    // const verifyEmailToken = newUser.createEmailVerificationToken();
+    try {
+        const verificationURL = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
 
-    // try {
-    //     const verificationURL = `${req.protocol}://${req.get(
-    //         'host'
-    //     )}/api/v1/users/verifyEmail/${verifyEmailToken}`;
+        await new Email(newUser, verificationURL).sendVerifyEmail();
 
-    //     await new Email(newUser, verificationURL).sendVerifyEmail();
+        // Send response indicating successful user creation and send token
+        await newUser.save({ validateBeforeSave: false });
+        newUser.emailVerificationToken = undefined;
+        newUser.verificationTokenExpires = undefined;
+        createSendToken(newUser, 201, req, res, next);
+    } catch (err) {
+        // If there's an error sending the email, handle it
+        newUser.emailVerificationToken = undefined;
+        newUser.verificationTokenExpires = undefined;
+        await newUser.save({ validateBeforeSave: false });
 
-    //     // Send response indicating successful user creation and send token
-    //     await newUser.save({ validateBeforeSave: false });
-    //     newUser.emailVerificationToken = undefined;
-    //     newUser.verificationTokenExpires = undefined;
-    //     createSendToken(newUser, 201, req, res, next);
-    // } catch (err) {
-    //     // If there's an error sending the email, handle it
-    //     newUser.emailVerificationToken = undefined;
-    //     newUser.verificationTokenExpires = undefined;
-    //     await newUser.save({ validateBeforeSave: false });
-
-    //     return next(
-    //         new AppError(
-    //             'There was an error sending the verification email. Try again later!',
-    //             500
-    //         )
-    //     );
-    // }
+        return next(
+            new AppError(
+                'There was an error sending the verification email. Try again later!',
+                500
+            )
+        );
+    }
 });
 
 exports.resendVerificationEmail = catchAsync(async (req, res, next) => {
@@ -134,9 +132,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 
     // If user not found or token has expired
     if (!user) {
-        return next(
-            new AppError('Verification token is invalid or has expired.', 400)
-        );
+        return res.render('verifyFail');
     }
 
     // If the user is already verified, return a message indicating that
@@ -154,7 +150,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
     user.verificationTokenExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
-    res.render('verifySuccess');
+    return res.render('verifySuccess');
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -202,7 +198,7 @@ exports.protect = catchAsync(async (req, res, next) => {
             )
         );
     }
-    /*
+
     // Check if email is verified
     if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
         return next(
@@ -212,7 +208,6 @@ exports.protect = catchAsync(async (req, res, next) => {
             )
         );
     }
-    */
 
     // check if token issued before changing password
     if (currentUser.changedPasswordAfter(decoded.iat)) {

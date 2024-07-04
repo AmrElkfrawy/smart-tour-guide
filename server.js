@@ -2,8 +2,10 @@ const mongoose = require('mongoose');
 
 process.on('uncaughtException', (err) => {
     console.log('Uncaught exception, Application is terminating.');
-    console.log(err.name, err.message);
-    console.log(err.stack);
+    console.log('Error Object:', err);
+    console.log('Error Name:', err.name);
+    console.log('Error Message:', err.message);
+    console.log('Error Stack:', err.stack);
     process.exit(1);
 });
 
@@ -31,8 +33,10 @@ mongoose
 
 process.on('unhandledRejection', (err) => {
     console.log('Unhandled rejection, Application is terminating.');
-    console.log(err.name, err.message);
-    console.log(err.stack);
+    console.log('Error Object:', err);
+    console.log('Error Name:', err.name);
+    console.log('Error Message:', err.message);
+    console.log('Error Stack:', err.stack);
     server.close(() => {
         process.exit(1);
     });
