@@ -11,20 +11,35 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const Email = require('./../utils/email');
 
-const signToken = (id, role) => {
-    return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
+const signToken = (id, role, secret, expiresIn) => {
+    return jwt.sign({ id, role }, secret, {
+        expiresIn: expiresIn,
     });
 };
 
-const createSendToken = (user, statusCode, req, res) => {
-    const token = signToken(user._id, user.role);
+const createSendToken = async (user, statusCode, req, res) => {
+    const accessToken = signToken(
+        user._id,
+        user.role,
+        process.env.JWT_SECRET,
+        process.env.JWT_EXPIRES_IN
+    );
+    const refreshToken = signToken(
+        user._id,
+        user.role,
+        process.env.JWT_REFRESH_SECRET,
+        process.env.JWT_REFRESH_EXPIRES_IN
+    );
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
 
     // delete password
     user.password = undefined;
     res.status(statusCode).json({
         status: 'success',
-        token,
+        accessToken,
+        refreshToken,
         data: {
             user,
         },
@@ -351,6 +366,25 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
     await user.save();
+
+    createSendToken(user, 200, req, res);
+});
+
+exports.refreshToken = catchAsync(async (req, res, next) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken)
+        return next(new AppError('Refresh Token is required', 403));
+
+    const decoded = await promisify(jwt.verify)(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET
+    );
+
+    const user = await User.findById(decoded.id).select('+refreshToken');
+
+    if (!user || user.refreshToken !== refreshToken)
+        return next(new AppError('Refresh Token is invalid', 400));
 
     createSendToken(user, 200, req, res);
 });
