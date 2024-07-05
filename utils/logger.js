@@ -21,9 +21,9 @@ const logger = createLogger({
             maxFiles: '14d',
             format: logFormat,
         }),
-        new transports.Console({
-            format: format.combine(format.colorize(), logFormat),
-        }),
+        // new transports.Console({
+        //     format: format.combine(format.colorize(), logFormat),
+        // }),
     ],
     exceptionHandlers: [
         new transports.File({ filename: 'logs/exceptions.log' }),

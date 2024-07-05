@@ -23,17 +23,17 @@ let server;
 mongoose
     .connect(dbConnection)
     .then(() => {
-        logger.info('DB connection successful');
+        console.log('DB connection successful');
 
         startTourCompletionCron();
 
         server = app.listen(port, () => {
-            logger.info(`Starting server on port ${port}`);
+            console.log(`Starting server on port ${port}`);
         });
         const io = require('./socket').init(server);
     })
     .catch((err) => {
-        logger.error(`Error connecting to the database ${err}`);
+        console.error(`Error connecting to the database ${err}`);
     });
 
 process.on('unhandledRejection', (err) => {

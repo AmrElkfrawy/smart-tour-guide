@@ -42,6 +42,11 @@ app.use(cors());
 // Set Security HTTP headers
 app.use(helmet({ contentSecurityPolicy: false }));
 
+// Development logging in console
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+}
+
 // Custom Morgan format string that excludes the timestamp
 const customMorganFormat =
     ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] - :referrer :user-agent';
