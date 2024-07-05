@@ -1,13 +1,12 @@
 const mongoose = require('mongoose');
-const logger = require('./utils/logger');
 const startTourCompletionCron = require('./cronJobs/tourCompletion');
 
 process.on('uncaughtException', (err) => {
-    logger.error('Uncaught exception, Application is terminating.');
-    logger.error('Error Object:', err);
-    logger.error('Error Name:', err.name);
-    logger.error('Error Message:', err.message);
-    logger.error('Error Stack:', err.stack);
+    console.error('Uncaught exception, Application is terminating.');
+    console.error('Error Object:', err);
+    console.error('Error Name:', err.name);
+    console.error('Error Message:', err.message);
+    console.error('Error Stack:', err.stack);
     process.exit(1);
 });
 
@@ -37,11 +36,11 @@ mongoose
     });
 
 process.on('unhandledRejection', (err) => {
-    logger.error('Unhandled rejection, Application is terminating.');
-    logger.error('Error Object:', err);
-    logger.error('Error Name:', err.name);
-    logger.error('Error Message:', err.message);
-    logger.error('Error Stack:', err.stack);
+    console.error('Unhandled rejection, Application is terminating.');
+    console.error('Error Object:', err);
+    console.error('Error Name:', err.name);
+    console.error('Error Message:', err.message);
+    console.error('Error Stack:', err.stack);
     server.close(() => {
         process.exit(1);
     });
