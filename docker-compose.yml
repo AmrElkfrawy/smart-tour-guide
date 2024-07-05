@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+    app:
+        build: .
+        ports:
+            - '8000:8000'
+        environment:
+            DATABASE: mongodb://db:27017
+            REDIS_URL: redis://redis:6379
+        volumes:
+            - .:/app
+    db:
+        image: mongo:5.0.28-rc0-focal
+        ports:
+            - '27017:27017'
+        volumes:
+            - mongo-data:/data/db
+    redis:
+        image: redis:latest
+        ports:
+            - '6379:6379'
+        volumes:
+            - redis-data:/data
+
+volumes:
+    mongo-data:
+    redis-data:

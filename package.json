@@ -5,7 +5,9 @@
     "main": "app.js",
     "scripts": {
         "start": "nodemon server.js",
-        "start:prod": "NODE_ENV=production nodemon server.js"
+        "start:prod": "NODE_ENV=production nodemon server.js",
+        "start:docker": "node server.js",
+        "seed": "node data/import-data.js --delete && node data/import-data.js --import"
     },
     "author": "Graduation Members",
     "license": "ISC",
@@ -32,6 +34,7 @@
         "nodemailer": "^6.9.10",
         "opencage-api-client": "^1.0.7",
         "pug": "^3.0.3",
+        "redis": "^4.6.15",
         "slugify": "^1.6.6",
         "socket.io": "^4.7.5",
         "streamifier": "^0.1.1",
