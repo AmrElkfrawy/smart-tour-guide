@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
+const logger = require('./utils/logger');
 const startTourCompletionCron = require('./cronJobs/tourCompletion');
 
 process.on('uncaughtException', (err) => {
-    console.log('Uncaught exception, Application is terminating.');
-    console.log('Error Object:', err);
-    console.log('Error Name:', err.name);
-    console.log('Error Message:', err.message);
-    console.log('Error Stack:', err.stack);
+    logger.error('Uncaught exception, Application is terminating.');
+    logger.error('Error Object:', err);
+    logger.error('Error Name:', err.name);
+    logger.error('Error Message:', err.message);
+    logger.error('Error Stack:', err.stack);
     process.exit(1);
 });
 
@@ -22,25 +23,25 @@ let server;
 mongoose
     .connect(dbConnection)
     .then(() => {
-        console.log('DB connection successful');
+        logger.info('DB connection successful');
 
         startTourCompletionCron();
 
         server = app.listen(port, () => {
-            console.log(`Starting server on port ${port}`);
+            logger.info(`Starting server on port ${port}`);
         });
         const io = require('./socket').init(server);
     })
     .catch((err) => {
-        console.log(`Error connecting to the database ${err}`);
+        logger.error(`Error connecting to the database ${err}`);
     });
 
 process.on('unhandledRejection', (err) => {
-    console.log('Unhandled rejection, Application is terminating.');
-    console.log('Error Object:', err);
-    console.log('Error Name:', err.name);
-    console.log('Error Message:', err.message);
-    console.log('Error Stack:', err.stack);
+    logger.error('Unhandled rejection, Application is terminating.');
+    logger.error('Error Object:', err);
+    logger.error('Error Name:', err.name);
+    logger.error('Error Message:', err.message);
+    logger.error('Error Stack:', err.stack);
     server.close(() => {
         process.exit(1);
     });

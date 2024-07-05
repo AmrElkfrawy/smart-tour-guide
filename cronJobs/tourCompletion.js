@@ -1,5 +1,6 @@
 const cron = require('node-cron');
-const CustomizedTour = require('../models/customizedTourModel'); // Adjust the path as per your project structure
+const CustomizedTour = require('../models/customizedTourModel');
+const logger = require('../utils/logger');
 
 const startTourCompletionCron = () => {
     cron.schedule('0 0 * * *', async () => {
@@ -18,13 +19,13 @@ const startTourCompletionCron = () => {
                 })
             );
 
-            console.log('Marked tours as completed:', toursToUpdate.length);
+            logger.info('Marked tours as completed:', toursToUpdate.length);
         } catch (error) {
-            console.error('Error marking tours as completed:', error);
+            logger.error('Error marking tours as completed:', error);
         }
     });
 
-    console.log('Tour completion cron job started');
+    logger.info('Tour completion cron job started');
 };
 
 module.exports = startTourCompletionCron;
