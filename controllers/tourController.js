@@ -4,6 +4,7 @@ const CustomizedTour = require('../models/customizedTourModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
+const redisClient = require('../utils/redisUtil');
 
 const multer = require('multer');
 const streamifier = require('streamifier');
@@ -113,6 +114,7 @@ exports.updateTourImages = catchAsync(async (req, res, next) => {
         tour.imagesId[parseInt(imagesIndex[i])] = imagesId[i];
     }
     await tour.save();
+    redisClient.flushAll();
     res.status(200).json({
         status: 'success',
         doc: {
@@ -157,6 +159,7 @@ exports.deleteTourImages = catchAsync(async (req, res, next) => {
         tour.imagesId = [];
     }
     await tour.save();
+    redisClient.flushAll();
     res.status(200).json({
         status: 'success',
         doc: {

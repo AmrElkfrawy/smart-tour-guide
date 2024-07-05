@@ -49,7 +49,7 @@ exports.detect = catchAsync(async (req, res, next) => {
     let apiUrl,
         result,
         skip = false;
-    if (req.body.lat && req.body.lng) {
+    if (req.body.lat && req.body.lng && process.env.MODEL_AUTH_TOKEN) {
         const data = await opencage.geocode({
             q: `${req.body.lat}, ${req.body.lng}`,
             language: 'en',
