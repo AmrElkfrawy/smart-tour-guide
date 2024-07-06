@@ -10,7 +10,7 @@ process.on('uncaughtException', (err) => {
     process.exit(1);
 });
 
-// loading environment variables
+// Load environment variables
 const dotenv = require('dotenv');
 dotenv.config({ path: './.env' });
 
@@ -19,21 +19,21 @@ const app = require('./app');
 const dbConnection = process.env.DATABASE;
 const port = process.env.PORT || 3000;
 let server;
+
 mongoose
     .connect(dbConnection)
-    .then(() => {
+    .then(async () => {
         console.log('DB connection successful');
-
         startTourCompletionCron();
-
-        server = app.listen(port, () => {
-            console.log(`Starting server on port ${port}`);
-        });
-        const io = require('./socket').init(server);
     })
     .catch((err) => {
-        console.error(`Error connecting to the database ${err}`);
+        console.error(`Error connecting to the database: ${err}`);
     });
+
+server = app.listen(port, () => {
+    console.log(`Starting server on port ${port}`);
+});
+const io = require('./socket').init(server);
 
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled rejection, Application is terminating.');

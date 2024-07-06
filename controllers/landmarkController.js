@@ -2,7 +2,7 @@ const Landmark = require('./../models/landmarkModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
-
+const redisClient = require('./../utils/redisUtil');
 const multer = require('multer');
 const cloudinary = require('../utils/cloudinary');
 const streamifier = require('streamifier');
@@ -129,6 +129,7 @@ exports.updateLandmarkImages = catchAsync(async (req, res, next) => {
         landmark.imagesId[parseInt(imagesIndex[i])] = imagesId[i];
     }
     await landmark.save();
+    redisClient.flushAll();
     res.status(200).json({
         status: 'success',
         doc: {
@@ -173,6 +174,7 @@ exports.deleteLandmarkImages = catchAsync(async (req, res, next) => {
         landmark.imagesId = [];
     }
     await landmark.save();
+    redisClient.flushAll();
     res.status(200).json({
         status: 'success',
         doc: {
