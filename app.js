@@ -10,6 +10,7 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 
 const AppError = require('./utils/appError');
+const logger = require('./utils/logger');
 
 const globalErrorHandler = require('./controllers/errorController');
 const landmarkRouter = require('./routes/landmarkRoutes');
@@ -41,10 +42,17 @@ app.use(cors());
 // Set Security HTTP headers
 app.use(helmet({ contentSecurityPolicy: false }));
 
-// Development logging
+// Development logging in console
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
+
+// Custom Morgan format string that excludes the timestamp
+const customMorganFormat =
+    ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] - :referrer :user-agent';
+
+// Use Morgan middleware with the custom format
+app.use(morgan(customMorganFormat, { stream: logger.stream }));
 
 // Body parser, reading data from body in req.body
 app.use(express.json({ limit: '500kb' }));

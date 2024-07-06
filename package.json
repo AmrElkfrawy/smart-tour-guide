@@ -40,6 +40,8 @@
         "streamifier": "^0.1.1",
         "stripe": "^15.8.0",
         "validator": "^13.11.0",
+        "winston": "^3.13.0",
+        "winston-daily-rotate-file": "^5.0.0",
         "xss-clean": "^0.1.4"
     },
     "devDependencies": {

@@ -44,7 +44,7 @@ exports.resizeUserPhoto = (req, res, next) => {
     try {
         if (!req.file) return next();
 
-        let cld_upload_stcream = cloudinary.uploader.upload_stream(
+        let cld_upload_stream = cloudinary.uploader.upload_stream(
             {
                 folder: 'users',
                 transformation: [
@@ -59,7 +59,10 @@ exports.resizeUserPhoto = (req, res, next) => {
         );
         streamifier.createReadStream(req.file.buffer).pipe(cld_upload_stream);
     } catch (err) {
-        return next(new AppError(err, 500));
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Error processing image',
+        });
     }
 };
 
