@@ -88,6 +88,12 @@ router.get(
     customizedTourController.getRespondingGuidesForTour
 );
 
+router.get(
+    '/accepted-tours',
+    authController.restrictTo('guide'),
+    customizedTourController.getAcceptedToursForGuide
+);
+
 // Routes for CRUD operations on customized tours
 router
     .route('/')
