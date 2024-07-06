@@ -6,7 +6,7 @@ const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 let redisClient;
 if (process.env.redis === 'true') {
-    const redisClient = require('../utils/redisUtil');
+    redisClient = require('../utils/redisUtil');
 }
 
 const multer = require('multer');

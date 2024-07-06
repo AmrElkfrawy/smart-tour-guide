@@ -1,0 +1,16 @@
+[Unit]
+Description="Sawah App"
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /home/ubuntu/app/smart-tour-guide/server.js
+WorkingDirectory=/home/ubuntu/app/smart-tour-guide
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=SawahApp
+EnvironmentFile=/home/ubuntu/app/smart-tour-guide/.env
+
+[Install]
+WantedBy=multi-user.target
