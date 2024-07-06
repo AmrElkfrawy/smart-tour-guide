@@ -130,7 +130,7 @@ exports.getAllGovernorates = catchAsync(async (req, res, next) => {
 exports.getLandmarksByGovernorate = catchAsync(async (req, res, next) => {
     const landmarks = await Landmark.find({
         'location.governorate': req.params.governorate,
-    }).select('name photo description');
+    }).select('name images description');
 
     res.status(200).json({
         status: 'success',
@@ -536,4 +536,23 @@ exports.confirmCompletionUser = catchAsync(async (req, res, next) => {
             tour,
         },
     });
+});
+
+exports.getRespondingGuidesForTour = catchAsync(async (req, res, next) => {
+    const { tourId } = req.params;
+    const tour = await CustomizedTour.findById({
+        _id: tourId,
+        user: req.user.id,
+    });
+
+    if (!tour) return next(new AppError('No tour found with this id.', 404));
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            respondingGuides: tour.respondingGuides,
+        },
+    });
+
+    console.log(tour);
 });
