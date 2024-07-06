@@ -1,8 +1,10 @@
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const APIFeatures = require('./../utils/apiFeatures');
-const redisClient = require('./../utils/redisUtil');
-
+let redisClient;
+if (process.env.redis === 'true') {
+    redisClient = require('./../utils/redisUtil');
+}
 exports.getAll = (Model) =>
     catchAsync(async (req, res, next) => {
         const cacheKey = `getAll-${Model.collection.name}-${JSON.stringify(
@@ -10,17 +12,18 @@ exports.getAll = (Model) =>
         )}-${JSON.stringify(req.params)}`;
 
         try {
-            const cachedData = await redisClient.get(cacheKey);
-
-            if (cachedData) {
-                return res.status(200).json({
-                    status: 'success',
-                    requestedAt: req.requestTime,
-                    results: JSON.parse(cachedData).length,
-                    data: {
-                        docs: JSON.parse(cachedData),
-                    },
-                });
+            if (process.env.redis === 'true') {
+                const cachedData = await redisClient.get(cacheKey);
+                if (cachedData) {
+                    return res.status(200).json({
+                        status: 'success',
+                        requestedAt: req.requestTime,
+                        results: JSON.parse(cachedData).length,
+                        data: {
+                            docs: JSON.parse(cachedData),
+                        },
+                    });
+                }
             }
 
             // To allow for nested GET reviews on Landmark/Tour/Guide (hack)
@@ -47,13 +50,21 @@ exports.getAll = (Model) =>
                 .limitFields()
                 .paginate();
             const docs = await features.query;
-
-            if (
-                ['landmarks', 'tours', 'categories', 'tourcategories'].includes(
-                    Model.collection.name
-                )
-            ) {
-                await redisClient.setEx(cacheKey, 3600, JSON.stringify(docs));
+            if (process.env.redis === 'true') {
+                if (
+                    [
+                        'landmarks',
+                        'tours',
+                        'categories',
+                        'tourcategories',
+                    ].includes(Model.collection.name)
+                ) {
+                    await redisClient.setEx(
+                        cacheKey,
+                        3600,
+                        JSON.stringify(docs)
+                    );
+                }
             }
             // SEND RESPONSE
             res.status(200).json({
@@ -90,7 +101,9 @@ exports.getOne = (Model, popOptions) =>
 exports.createOne = (Model) =>
     catchAsync(async (req, res, next) => {
         const newDoc = await Model.create(req.body);
-        await redisClient.flushAll();
+        if (process.env.redis === 'true') {
+            await redisClient.flushAll();
+        }
         res.status(201).json({
             status: 'success',
             data: {
@@ -109,7 +122,9 @@ exports.updateOne = (Model) =>
         if (!doc) {
             return next(new AppError('No document found with this ID', 404));
         }
-        await redisClient.flushAll();
+        if (process.env.redis === 'true') {
+            await redisClient.flushAll();
+        }
 
         res.status(200).json({
             status: 'success',
@@ -126,7 +141,9 @@ exports.deleteOne = (Model) =>
         if (!doc) {
             return next(new AppError('No document found with this ID', 404));
         }
-        await redisClient.flushAll();
+        if (process.env.redis === 'true') {
+            await redisClient.flushAll();
+        }
 
         res.status(204).json({
             status: 'success',
