@@ -1,6 +1,5 @@
 const AppError = require('./../utils/appError');
-const logger = require('../utils/logger');
-
+const logger = require('./../utils/logger');
 const fs = require('fs');
 const path = require('path');
 const { promisify } = require('util');
@@ -72,6 +71,8 @@ const sendErrorProd = (err, req, res) => {
         });
     }
     // Programming or other unknown error
+    console.error('Unknown Error:', err);
+    logger.error(err);
     // generic message
     return res.status(500).json({
         status: 'error',
@@ -88,6 +89,7 @@ module.exports = (err, req, res, next) => {
     } else if (process.env.NODE_ENV === 'production') {
         let error = JSON.parse(JSON.stringify(err));
         error.message = err.message;
+        error.ogError = err;
 
         if (error.name === 'CastError') error = handleCastErrorDB(error);
         if (error.code === 11000) error = handleDuplicateFieldsDB(error);

@@ -14,7 +14,20 @@ exports.getStats = catchAsync(async (req, res, next) => {
     const landmarks = await Landmark.countDocuments();
     const bookings = await Booking.countDocuments();
     const tours = await Tour.countDocuments();
+    return res.status(200).json({
+        status: 'success',
+        docs: {
+            users,
+            guides,
+            reviews,
+            landmarks,
+            tours,
+            bookings,
+        },
+    });
+});
 
+exports.getAdminStats = catchAsync(async (req, res, next) => {
     // Aggregations
     const monthlySignUps = await User.aggregate([
         {
@@ -169,19 +182,12 @@ exports.getStats = catchAsync(async (req, res, next) => {
     return res.status(200).json({
         status: 'success',
         docs: {
-            users,
-            guides,
-            reviews,
-            landmarks,
-            tours,
-            bookings,
             monthlySignUps,
-            popularLandmarks,
-            topBookedTours,
-            topGuides,
             monthlyRevenue,
-            totalRevenue: revenueStats[0]?.totalRevenue || 0,
-            averageRevenue: revenueStats[0]?.averageRevenue || 0,
+            revenueStats,
+            popularLandmarks,
+            topGuides,
+            topBookedTours,
         },
     });
 });
