@@ -76,7 +76,7 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
 
     // url based on environment
     let successUrl;
-    if (process.env.STRIPE_ENV === 'production') {
+    if (process.env.STRIPE_MODE !== 'production') {
         successUrl = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/bookings/redirect?status=success`;
@@ -147,7 +147,7 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
     ];
 
     let successUrl;
-    if (process.env.STRIPE_ENV === 'production') {
+    if (process.env.STRIPE_MODE !== 'production') {
         successUrl = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/bookings/redirect?status=success`;
@@ -220,7 +220,7 @@ exports.createCustomTourBookingCheckout = catchAsync(async (req, res, next) => {
 
     // url based on environment
     let successUrl;
-    if (process.env.STRIPE_ENV === 'production') {
+    if (process.env.STRIPE_MODE !== 'production') {
         successUrl = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/bookings/redirect?status=success`;
