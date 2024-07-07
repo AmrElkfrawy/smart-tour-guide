@@ -443,7 +443,6 @@ const createBookingCheckout = async (session) => {
             await tour.save();
         } else if (type === 'cart') {
             const cart = await Cart.findOne({
-                user: session.customer,
                 _id: session.client_reference_id,
             });
             const tours = cart.cartItems.map((item) => {
