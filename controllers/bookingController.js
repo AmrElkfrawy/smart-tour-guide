@@ -27,8 +27,7 @@ exports.updateBooking = factory.updateOne(Booking);
 exports.getBooking = catchAsync(async (req, res, next) => {
     let filter = {};
     if (req.user.role === 'user') filter = { user: req.user._id };
-    if (req.user.role === 'guide')
-        filter = { tours: { $elemMatch: { guide: req.user._id } } };
+    if (req.user.role === 'guide') filter = { tours: { guide: req.user._id } };
     const booking = await Booking.findOne({ _id: req.params.id, ...filter });
     if (req.user.role === 'user' && !booking)
         return next(new AppError("You don't have a booking with this id", 404));
@@ -75,20 +74,37 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
         };
     });
 
-    const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        success_url: `${req.protocol}://${req.get(
+    // url based on environment
+    let successUrl;
+    if (process.env.STRIPE_ENV === 'production') {
+        successUrl = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=success`;
+    } else {
+        successUrl = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/bookings/create/?cartId=${req.params.cartId}&userId=${
             req.user._id
         }&price=${cart.totalCartPrice}&firstName=${
             req.body.firstName
-        }&lastName=${req.body.lastName}&phone=${req.body.phone}&type=cart`,
+        }&lastName=${req.body.lastName}&phone=${req.body.phone}&type=cart`;
+    }
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        success_url: successUrl,
         cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
         customer_email: req.user.email,
         client_reference_id: req.params.cartId,
         line_items: items,
         mode: 'payment',
+        metadata: {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            phone: req.body.phone,
+            price: cart.totalCartPrice,
+            type: 'cart',
+        },
     });
 
     res.status(200).json({
@@ -129,9 +145,13 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
         },
     ];
 
-    const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        success_url: `${req.protocol}://${req.get(
+    let successUrl;
+    if (process.env.STRIPE_ENV === 'production') {
+        successUrl = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=success`;
+    } else {
+        successUrl = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/bookings/create/?tourId=${req.params.tourId}&userId=${
             req.user._id
@@ -139,12 +159,26 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
             req.body.tourDate
         }&firstName=${req.body.firstName}&lastName=${req.body.lastName}&phone=${
             req.body.phone
-        }&type=standard`,
+        }&type=standard`;
+    }
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        success_url: successUrl,
         cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
         customer_email: req.user.email,
         client_reference_id: req.params.tourId,
         line_items: items,
         mode: 'payment',
+        metadata: {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            phone: req.body.phone,
+            price: tour.price,
+            groupSize: req.body.groupSize,
+            tourDate: req.body.tourDate,
+            type: 'standard',
+        },
     });
 
     res.status(200).json({
@@ -182,20 +216,36 @@ exports.createCustomTourBookingCheckout = catchAsync(async (req, res, next) => {
         },
     ];
 
-    const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        success_url: `${req.protocol}://${req.get(
+    // url based on environment
+    let successUrl;
+    if (process.env.STRIPE_ENV === 'production') {
+        successUrl = `${req.protocol}://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=success`;
+    } else {
+        successUrl = `${req.protocol}://${req.get(
             'host'
         )}/api/v1/bookings/create/?customizedTourId=${
             req.params.customizedTourId
         }&firstName=${req.body.firstName}&lastName=${req.body.lastName}&phone=${
             req.body.phone
-        }&type=custom`,
+        }&type=custom`;
+    }
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        success_url: successUrl,
         cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
         customer_email: req.user.email,
-        client_reference_id: req.params.cartId,
+        client_reference_id: req.params.customizedTourId,
         line_items: items,
         mode: 'payment',
+        metadata: {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            phone: req.body.phone,
+            type: 'custom',
+        },
     });
 
     res.status(200).json({
@@ -204,6 +254,7 @@ exports.createCustomTourBookingCheckout = catchAsync(async (req, res, next) => {
     });
 });
 
+// this function is called after the payment is successful when working locally
 exports.createBooking = catchAsync(async (req, res, next) => {
     if (req.query.type === 'standard') {
         const {
@@ -345,6 +396,118 @@ exports.createBooking = catchAsync(async (req, res, next) => {
         res.redirect(newUrl);
     }
 });
+
+exports.webhookCheckout = (req, res, next) => {
+    const signature = req.headers['stripe-signature'];
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(
+            req.body,
+            signature,
+            process.env.STRIPE_WEBHOOK_SECRET
+        );
+    } catch (err) {
+        return res.status(400).send(`Webhook error: ${err.message}`);
+    }
+
+    if (event.type === 'checkout.session.completed')
+        createBookingCheckout(event.data.object);
+    res.status(200).json({ received: true });
+};
+
+const createBookingCheckout = async (session) => {
+    try {
+        const type = session.metadata.type;
+        if (type === 'standard') {
+            const tour = await Tour.findById(session.client_reference_id);
+            const guideId = tour.guide._id;
+            await Booking.create({
+                user: session.customer,
+                firstName: session.metadata.firstName,
+                lastName: session.metadata.lastName,
+                phone: session.metadata.phone,
+                tourType: 'standard',
+                tours: [
+                    {
+                        tour: session.client_reference_id,
+                        groupSize: session.metadata.groupSize,
+                        price:
+                            session.metadata.price * session.metadata.groupSize,
+                        tourDate: session.metadata.tourDate,
+                        guide: guideId,
+                    },
+                ],
+            });
+
+            tour.bookings += session.metadata.groupSize;
+            await tour.save();
+        } else if (type === 'cart') {
+            const cart = await Cart.findOne({
+                user: session.customer,
+                _id: session.client_reference_id,
+            });
+            const tours = cart.cartItems.map((item) => {
+                return {
+                    tour: item.tour,
+                    groupSize: item.groupSize,
+                    price: item.itemPrice,
+                    tourDate: item.tourDate,
+                    guide: item.tour.guide,
+                };
+            });
+            await Booking.create({
+                user: session.customer,
+                totalPrice: session.metadata.price,
+                tourType: 'standard',
+                firstName: session.metadata.firstName,
+                lastName: session.metadata.lastName,
+                phone: session.metadata.phone,
+                tours,
+            });
+
+            const updatePromises = await Promise.all(
+                cart.cartItems.map(async (item) => {
+                    return await Tour.findByIdAndUpdate(
+                        item.tour._id,
+                        {
+                            $inc: { bookings: item.groupSize },
+                        },
+                        { new: true }
+                    );
+                })
+            );
+            await Cart.findByIdAndDelete(session.client_reference_id);
+        } else if (type === 'custom') {
+            const customizedTour = await CustomizedTour.findById(
+                session.client_reference_id
+            );
+            const guideId = customizedTour.acceptedGuide._id;
+            await Booking.create({
+                user: customizedTour.user._id,
+                totalPrice: customizedTour.price,
+                firstName: session.metadata.firstName,
+                lastName: session.metadata.lastName,
+                phone: session.metadata.phone,
+                tourType: 'customized',
+                tours: [
+                    {
+                        tour: session.client_reference_id,
+                        groupSize: 1,
+                        price: customizedTour.price,
+                        tourDate: customizedTour.startDate,
+                        guide: guideId,
+                    },
+                ],
+            });
+
+            customizedTour.bookings += 1;
+            customizedTour.paymentStatus = 'paid';
+            await customizedTour.save();
+        }
+    } catch (err) {
+        console.log(err);
+    }
+};
 
 exports.redirectBooking = catchAsync(async (req, res, next) => {
     if (req.query.status === 'success') {

@@ -7,11 +7,13 @@ const router = express.Router();
 
 router.get('/redirect', bookingController.redirectBooking);
 
-router.get(
-    '/create',
-    bookingController.createBooking,
-    tourController.getAllTours
-);
+if (process.env.STRIPE_MODE !== 'production') {
+    router.get(
+        '/create',
+        bookingController.createBooking,
+        tourController.getAllTours
+    );
+}
 
 router.post(
     '/cart-checkout-session/:cartId',

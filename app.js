@@ -27,6 +27,7 @@ const tourCategoryRouter = require('./routes/tourCategoryRoutes');
 const contactRouter = require('./routes/contactRoutes');
 const chatbotRouter = require('./routes/chatbotRoutes');
 const statsRouter = require('./routes/statsRoutes');
+const bookingController = require('./controllers/bookingController');
 
 const app = express();
 
@@ -53,6 +54,15 @@ const customMorganFormat =
 
 // Use Morgan middleware with the custom format
 app.use(morgan(customMorganFormat, { stream: logger.stream }));
+
+// Stripe webhook, BEFORE body-parser, because stripe needs the body as stream
+const endpointSecret =
+    'whsec_8db2620b8d7ff53fef6112964d0719aef5fc07f58eb6cdc51e89c70d3dac6074';
+app.post(
+    '/webhook',
+    express.raw({ type: 'application/json' }),
+    bookingController.webhookCheckout
+);
 
 // Body parser, reading data from body in req.body
 app.use(express.json({ limit: '500kb' }));
