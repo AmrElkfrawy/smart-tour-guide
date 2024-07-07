@@ -427,6 +427,7 @@ const createBookingCheckout = async (session) => {
             await Booking.create({
                 user: session.metadata.customer,
                 firstName: session.metadata.firstName,
+                totalPrice: session.metadata.price * session.metadata.groupSize,
                 lastName: session.metadata.lastName,
                 phone: session.metadata.phone,
                 tourType: 'standard',
@@ -434,8 +435,7 @@ const createBookingCheckout = async (session) => {
                     {
                         tour: session.client_reference_id,
                         groupSize: session.metadata.groupSize,
-                        price:
-                            session.metadata.price * session.metadata.groupSize,
+                        price: session.metadata.price,
                         tourDate: session.metadata.tourDate,
                         guide: guideId,
                     },
