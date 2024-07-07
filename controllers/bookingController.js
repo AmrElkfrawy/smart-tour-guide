@@ -104,6 +104,7 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
             phone: req.body.phone,
             price: cart.totalCartPrice,
             type: 'cart',
+            customer: req.user.id,
         },
     });
 
@@ -178,6 +179,7 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
             groupSize: req.body.groupSize,
             tourDate: req.body.tourDate,
             type: 'standard',
+            customer: req.user.id,
         },
     });
 
@@ -245,6 +247,7 @@ exports.createCustomTourBookingCheckout = catchAsync(async (req, res, next) => {
             lastName: req.body.lastName,
             phone: req.body.phone,
             type: 'custom',
+            customer: req.user.id,
         },
     });
 
