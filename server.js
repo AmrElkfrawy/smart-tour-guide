@@ -1,3 +1,4 @@
+// @ Description: Start the server and listen on the specified port.
 const mongoose = require('mongoose');
 const startTourCompletionCron = require('./cronJobs/tourCompletion');
 

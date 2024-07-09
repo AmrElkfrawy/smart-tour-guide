@@ -1,3 +1,4 @@
+// @ Description: Main entry point for the application. This file contains the configuration for the express server, including middleware, routes, and error handling.
 const path = require('path');
 
 const express = require('express');
@@ -13,20 +14,6 @@ const AppError = require('./utils/appError');
 const logger = require('./utils/logger');
 
 const globalErrorHandler = require('./controllers/errorController');
-const landmarkRouter = require('./routes/landmarkRoutes');
-const userRouter = require('./routes/userRoutes');
-const categoryRouter = require('./routes/categoryRoutes');
-const reviewRouter = require('./routes/reviewRoutes');
-const detectionRouter = require('./routes/detectionRoutes');
-const customizedTourRouter = require('./routes/customizedTourRoutes');
-const tourRouter = require('./routes/tourRoutes');
-const cartRouter = require('./routes/cartRoutes');
-const wishlistRouter = require('./routes/wishlistRoutes');
-const bookingRouter = require('./routes/bookingRoutes');
-const tourCategoryRouter = require('./routes/tourCategoryRoutes');
-const contactRouter = require('./routes/contactRoutes');
-const chatbotRouter = require('./routes/chatbotRoutes');
-const statsRouter = require('./routes/statsRoutes');
 const bookingController = require('./controllers/bookingController');
 
 const app = express();
@@ -56,8 +43,6 @@ const customMorganFormat =
 app.use(morgan(customMorganFormat, { stream: logger.stream }));
 
 // Stripe webhook, BEFORE body-parser, because stripe needs the body as stream
-const endpointSecret =
-    'whsec_8db2620b8d7ff53fef6112964d0719aef5fc07f58eb6cdc51e89c70d3dac6074';
 app.post(
     '/webhook',
     express.raw({ type: 'application/json' }),
@@ -105,20 +90,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/api/v1/landmarks', landmarkRouter);
-app.use('/api/v1/users', userRouter);
-app.use('/api/v1/categories', categoryRouter);
-app.use('/api/v1/reviews', reviewRouter);
-app.use('/api/v1/detections', detectionRouter);
-app.use('/api/v1/customizedTour', customizedTourRouter);
-app.use('/api/v1/tours', tourRouter);
-app.use('/api/v1/carts', cartRouter);
-app.use('/api/v1/wishlists', wishlistRouter);
-app.use('/api/v1/bookings', bookingRouter);
-app.use('/api/v1/tourCategories', tourCategoryRouter);
-app.use('/api/v1/contact-us', contactRouter);
-app.use('/api/v1/chatbot', chatbotRouter);
-app.use('/api/v1/stats', statsRouter);
+require('./routes/routes')(app);
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

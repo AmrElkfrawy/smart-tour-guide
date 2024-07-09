@@ -1,0 +1,31 @@
+const landmarkRouter = require('./landmarkRoutes');
+const userRouter = require('./userRoutes');
+const categoryRouter = require('./categoryRoutes');
+const reviewRouter = require('./reviewRoutes');
+const detectionRouter = require('./detectionRoutes');
+const customizedTourRouter = require('./customizedTourRoutes');
+const tourRouter = require('./tourRoutes');
+const cartRouter = require('./cartRoutes');
+const wishlistRouter = require('./wishlistRoutes');
+const bookingRouter = require('./bookingRoutes');
+const tourCategoryRouter = require('./tourCategoryRoutes');
+const contactRouter = require('./contactRoutes');
+const chatbotRouter = require('./chatbotRoutes');
+const statsRouter = require('./statsRoutes');
+
+module.exports = (app) => {
+    app.use('/api/v1/landmarks', landmarkRouter);
+    app.use('/api/v1/users', userRouter);
+    app.use('/api/v1/categories', categoryRouter);
+    app.use('/api/v1/reviews', reviewRouter);
+    app.use('/api/v1/detections', detectionRouter);
+    app.use('/api/v1/customizedTour', customizedTourRouter);
+    app.use('/api/v1/tours', tourRouter);
+    app.use('/api/v1/carts', cartRouter);
+    app.use('/api/v1/wishlists', wishlistRouter);
+    app.use('/api/v1/bookings', bookingRouter);
+    app.use('/api/v1/tourCategories', tourCategoryRouter);
+    app.use('/api/v1/contact-us', contactRouter);
+    app.use('/api/v1/chatbot', chatbotRouter);
+    app.use('/api/v1/stats', statsRouter);
+};

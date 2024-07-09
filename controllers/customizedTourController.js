@@ -237,7 +237,7 @@ exports.respondToTourRequest = catchAsync(async (req, res, next) => {
     if (!tourRequest) {
         return next(new AppError('Tour request not found. ', 404));
     }
-
+    /*
     // Check if the guide's languages and governorates match the tour request
     const languagesMatch = tourRequest.spokenLanguages.every((lang) =>
         guide.languages.includes(lang)
@@ -249,7 +249,7 @@ exports.respondToTourRequest = catchAsync(async (req, res, next) => {
             new AppError('You do NOT match this tour request preferences.', 400)
         );
     }
-
+    */
     if (tourRequest.acceptedGuide) {
         return next(new AppError('You can NOT respond to this tour.', 400));
     }
