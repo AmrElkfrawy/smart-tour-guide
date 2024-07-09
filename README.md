@@ -1,6 +1,5 @@
-## Documentation
-
-https://documenter.getpostman.com/view/28844817/2sA2xjyAij
+## How to use
+``` docker-compose up ```
 
 ## Project Status
 
