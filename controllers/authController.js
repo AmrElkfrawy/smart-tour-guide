@@ -200,7 +200,11 @@ exports.protect = catchAsync(async (req, res, next) => {
     }
 
     // Check if email is verified
-    if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
+    if (
+        !currentUser.emailVerified &&
+        req.path !== '/resendVerificationEmail' &&
+        req.path !== '/me'
+    ) {
         return next(
             new AppError(
                 'Please verify your email address to access this resource.',

@@ -75,11 +75,14 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
     });
 
     // url based on environment
-    let successUrl;
+    let successUrl, cancelUrl;
     if (process.env.STRIPE_MODE === 'production') {
-        successUrl = `${req.protocol}://${req.get(
+        successUrl = `https://${req.get(
             'host'
         )}/api/v1/bookings/redirect?status=success`;
+        cancelUrl = `https://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=cancel`;
     } else {
         successUrl = `${req.protocol}://${req.get(
             'host'
@@ -88,12 +91,13 @@ exports.createCartBookingCheckout = catchAsync(async (req, res, next) => {
         }&price=${cart.totalCartPrice}&firstName=${
             req.body.firstName
         }&lastName=${req.body.lastName}&phone=${req.body.phone}&type=cart`;
+        cancelUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
     }
 
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         success_url: successUrl,
-        cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
+        cancel_url: cancelUrl,
         customer_email: req.user.email,
         client_reference_id: req.params.cartId,
         line_items: items,
@@ -146,11 +150,14 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
         },
     ];
 
-    let successUrl;
+    let successUrl, cancelUrl;
     if (process.env.STRIPE_MODE === 'production') {
-        successUrl = `${req.protocol}://${req.get(
+        successUrl = `https://${req.get(
             'host'
         )}/api/v1/bookings/redirect?status=success`;
+        cancelUrl = `https://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=cancel`;
     } else {
         successUrl = `${req.protocol}://${req.get(
             'host'
@@ -161,12 +168,13 @@ exports.createTourBookingCheckout = catchAsync(async (req, res, next) => {
         }&firstName=${req.body.firstName}&lastName=${req.body.lastName}&phone=${
             req.body.phone
         }&type=standard`;
+        cancelUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
     }
 
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         success_url: successUrl,
-        cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
+        cancel_url: cancelUrl,
         customer_email: req.user.email,
         client_reference_id: req.params.tourId,
         line_items: items,
@@ -219,11 +227,14 @@ exports.createCustomTourBookingCheckout = catchAsync(async (req, res, next) => {
     ];
 
     // url based on environment
-    let successUrl;
+    let successUrl, cancelUrl;
     if (process.env.STRIPE_MODE === 'production') {
-        successUrl = `${req.protocol}://${req.get(
+        successUrl = `https://${req.get(
             'host'
         )}/api/v1/bookings/redirect?status=success`;
+        cancelUrl = `https://${req.get(
+            'host'
+        )}/api/v1/bookings/redirect?status=cancel`;
     } else {
         successUrl = `${req.protocol}://${req.get(
             'host'
@@ -232,12 +243,13 @@ exports.createCustomTourBookingCheckout = catchAsync(async (req, res, next) => {
         }&firstName=${req.body.firstName}&lastName=${req.body.lastName}&phone=${
             req.body.phone
         }&type=custom`;
+        cancelUrl = `${req.protocol}://${req.get('host')}/api/v1/tours`;
     }
 
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         success_url: successUrl,
-        cancel_url: `${req.protocol}://${req.get('host')}/api/v1/tours`,
+        cancel_url: cancelUrl,
         customer_email: req.user.email,
         client_reference_id: req.params.customizedTourId,
         line_items: items,
