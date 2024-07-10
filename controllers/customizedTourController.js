@@ -561,23 +561,17 @@ exports.getRespondingGuidesForTour = catchAsync(async (req, res, next) => {
 exports.getAcceptedToursForGuide = catchAsync(async (req, res, next) => {
     const guideId = req.user.id;
 
-    const activeTours = await CustomizedTour.find({
+    const acceptedTours = await CustomizedTour.find({
         acceptedGuide: guideId,
-        status: 'confirmed',
     });
 
-    const completedTours = await CustomizedTour.find({
-        acceptedGuide: guideId,
-        status: 'completed',
-    });
-    if (!activeTours || !completedTours)
-        return next(new AppError('No tours found.', 404));
+    if (!acceptedTours) return next(new AppError('No tours found.', 404));
 
     res.status(200).json({
         status: 'success',
+        results: acceptedTours.length,
         data: {
-            activeTours,
-            completedTours,
+            acceptedTours,
         },
     });
 });
