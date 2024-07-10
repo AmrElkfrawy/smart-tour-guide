@@ -200,14 +200,14 @@ exports.protect = catchAsync(async (req, res, next) => {
     }
 
     // Check if email is verified
-    // if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
-    //     return next(
-    //         new AppError(
-    //             'Please verify your email address to access this resource.',
-    //             401
-    //         )
-    //     );
-    // }
+    if (!currentUser.emailVerified && req.path !== '/resendVerificationEmail') {
+        return next(
+            new AppError(
+                'Please verify your email address to access this resource.',
+                401
+            )
+        );
+    }
 
     // check if token issued before changing password
     if (currentUser.changedPasswordAfter(decoded.iat)) {

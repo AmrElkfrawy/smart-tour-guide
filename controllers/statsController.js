@@ -13,8 +13,9 @@ const CustomizedTour = require('../models/customizedTourModel');
 
 exports.getStats = catchAsync(async (req, res, next) => {
     let users, guides, reviews, landmarks, tours, bookings;
+    let stats;
     if (process.env.redis === 'true') {
-        const stats = await redisClient.exists('stats');
+        stats = await redisClient.exists('stats');
 
         if (stats) {
             users,
@@ -24,7 +25,8 @@ exports.getStats = catchAsync(async (req, res, next) => {
                 tours,
                 (bookings = JSON.parse(await redisClient.get('stats')));
         }
-    } else {
+    }
+    if (process.env.redis === 'false' || !stats) {
         users = await User.countDocuments({ role: 'user' });
         guides = await User.countDocuments({ role: 'guide' });
         reviews = await Reviews.countDocuments();
