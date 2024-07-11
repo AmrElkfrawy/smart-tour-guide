@@ -85,6 +85,10 @@ exports.getAllCustomizedTours = catchAsync(async (req, res, next) => {
                   },
                   // Check if the tour's governorate is included in the guide's governorates
                   governorate: { $in: req.user.governorates },
+                  respondingGuides: {
+                      $not: { $elemMatch: { guide: req.user.id } },
+                  },
+                  status: 'pending',
               };
 
     // EXECUTE QUERY
