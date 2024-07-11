@@ -562,6 +562,22 @@ exports.getRespondingGuidesForTour = catchAsync(async (req, res, next) => {
     });
 });
 
+exports.getToursGuideRespondedTo = catchAsync(async (req, res, next) => {
+    const guideId = req.user.id;
+
+    const tours = await CustomizedTour.find({
+        respondingGuides: { $elemMatch: { guide: guideId } },
+    });
+
+    res.status(200).json({
+        status: 'success',
+        results: tours.length,
+        data: {
+            tours,
+        },
+    });
+});
+
 exports.getAcceptedToursForGuide = catchAsync(async (req, res, next) => {
     const guideId = req.user.id;
 

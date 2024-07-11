@@ -89,6 +89,12 @@ router.get(
 );
 
 router.get(
+    '/tours-responded',
+    authController.restrictTo('guide'),
+    customizedTourController.getToursGuideRespondedTo
+);
+
+router.get(
     '/accepted-tours',
     authController.restrictTo('guide'),
     customizedTourController.getAcceptedToursForGuide
