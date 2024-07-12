@@ -16,6 +16,7 @@ const cloudinary = require('../utils/cloudinary');
 
 // models
 const User = require('./../models/userModel');
+const Guide = require('./../models/guideModel');
 
 // utils
 const catchAsync = require('./../utils/catchAsync');
@@ -89,19 +90,53 @@ exports.updateMe = catchAsync(async (req, res, next) => {
         );
     }
 
-    const filteredBody = filterObj(req.body, 'name', 'email');
+    const filteredBody = filterObj(req.body, 'name', 'email', 'bio', 'test');
     if (req.file) {
         filteredBody.photo = req.file.filename;
         filteredBody.photoId = req.file.photoId;
     }
-    const updatedUser = await User.findByIdAndUpdate(
-        req.user.id,
-        filteredBody,
-        {
-            new: true,
-            runValidators: true,
+
+    const updateOperations = { $set: filteredBody };
+
+    if (req.body.newLanguage) {
+        if (!updateOperations.$addToSet) {
+            updateOperations.$addToSet = { languages: req.body.newLanguage };
+        } else {
+            updateOperations.$addToSet.languages = req.body.newLanguage;
         }
-    );
+    }
+
+    if (req.body.newGovernorate) {
+        if (!updateOperations.$addToSet) {
+            updateOperations.$addToSet = {
+                governorates: req.body.newGovernorate,
+            };
+        } else {
+            updateOperations.$addToSet.governorates = req.body.newGovernorate;
+        }
+    }
+
+    let updatedUser;
+
+    if (req.user.role == 'guide') {
+        updatedUser = await Guide.findByIdAndUpdate(
+            req.user.id,
+            updateOperations,
+            {
+                new: true,
+                runValidators: true,
+            }
+        );
+    } else {
+        updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            updateOperations,
+            {
+                new: true,
+                runValidators: true,
+            }
+        );
+    }
 
     res.status(200).json({
         status: 'success',
