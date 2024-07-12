@@ -212,6 +212,7 @@ exports.getAdminStats = catchAsync(async (req, res, next) => {
         { $sort: { bookingCount: -1 } },
         { $limit: 5 },
     ]);
+    monthlyRevenue.sort((a, b) => a.month - b.month);
 
     return res.status(200).json({
         status: 'success',
